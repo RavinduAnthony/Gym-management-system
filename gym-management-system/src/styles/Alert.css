@@ -1,0 +1,151 @@
+/* Alert Overlay */
+.alert-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Alert Container */
+.alert-container {
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    position: relative;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Error Alert - Black and Red Background */
+.alert-error {
+    background: linear-gradient(135deg, #000000 0%, #7f1d1d 100%);
+    border: 2px solid rgba(220, 38, 38, 0.5);
+}
+
+/* Success Alert - Green Background */
+.alert-success {
+    background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+    border: 2px solid rgba(16, 185, 129, 0.5);
+}
+
+/* Alert Icon */
+.alert-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.alert-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Alert Content */
+.alert-content {
+    flex: 1;
+}
+
+.alert-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    margin: 0 0 8px 0;
+}
+
+.alert-message {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.95);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Close Button */
+.alert-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    font-size: 28px;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.alert-close:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.alert-close:active {
+    transform: scale(0.95);
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+    .alert-container {
+        padding: 20px;
+        max-width: 90%;
+    }
+
+    .alert-title {
+        font-size: 16px;
+    }
+
+    .alert-message {
+        font-size: 13px;
+    }
+
+    .alert-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .alert-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+}

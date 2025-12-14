@@ -1,0 +1,230 @@
+/* AddUser Container */
+.adduser-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+    padding: 30px 40px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    overflow-y: auto;
+}
+
+/* Home Icon Button */
+.home-icon-button {
+    position: absolute;
+    top: 20px;
+    right: 40px;
+    width: 55px;
+    height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+    z-index: 10;
+}
+
+.home-icon-button svg {
+    width: 32px;
+    height: 32px;
+}
+
+.home-icon-button:hover {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.6);
+}
+
+.home-icon-button:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+}
+
+/* AddUser Header */
+.adduser-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 20px 0;
+}
+
+.adduser-header h2 {
+    font-size: 42px;
+    font-weight: 700;
+    color: #dc2626;
+    margin: 0 0 15px 0;
+    text-shadow: 2px 2px 8px rgba(220, 38, 38, 0.8);
+    letter-spacing: 1px;
+}
+
+.adduser-header p {
+    font-size: 16px;
+    color: #e5e7eb;
+    margin: 0;
+    font-weight: 400;
+}
+
+/* Form Container */
+.adduser-form-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(0, 0, 0, 0.8) 100%);
+    border: 2px solid rgba(220, 38, 38, 0.3);
+    border-radius: 16px;
+    padding: 30px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Form Styles */
+.adduser-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+/* Input Styles */
+.form-input {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 14px;
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    background-color: rgba(0, 0, 0, 0.4);
+    color: #ffffff;
+    box-sizing: border-box;
+}
+
+.form-input::placeholder {
+    color: #6b7280;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+select.form-input {
+    cursor: pointer;
+}
+
+textarea.form-input {
+    resize: vertical;
+    font-family: inherit;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+/* Button Styles */
+.btn-primary,
+.btn-secondary {
+    padding: 12px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    color: white;
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+.btn-secondary {
+    color: #9ca3af;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    border-color: #dc2626;
+}
+
+.btn-secondary:active {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .adduser-container {
+        padding: 24px 16px;
+    }
+
+    .adduser-header h1 {
+        font-size: 32px;
+    }
+
+    .adduser-header p {
+        font-size: 14px;
+    }
+
+    .adduser-form-container {
+        padding: 24px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+    }
+}

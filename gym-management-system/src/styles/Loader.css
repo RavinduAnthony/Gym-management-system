@@ -1,0 +1,59 @@
+/* Loader Overlay */
+.loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+}
+
+/* Loader Container */
+.loader-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 40px;
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(0, 0, 0, 0.9) 100%);
+    border: 2px solid rgba(220, 38, 38, 0.4);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(220, 38, 38, 0.3);
+}
+
+/* Loader Logo */
+.loader-logo {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+    animation: pulse 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(220, 38, 38, 0.6));
+    background: transparent;
+    mix-blend-mode: multiply;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+/* Loader Message */
+.loader-message {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin: 0;
+    text-align: center;
+}

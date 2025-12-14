@@ -1,0 +1,481 @@
+/* ===== SPARTA GYM SPORTY THEME - GLOBAL STYLES ===== */
+
+/* Font Families */
+* {
+    font-family: 'Poppins', sans-serif;
+}
+
+/* ===== STYLISH DROPDOWNS & DATE PICKERS ===== */
+
+/* Custom Select Dropdown Styling */
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dc2626' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 18px;
+    padding-right: 40px !important;
+    cursor: pointer;
+    border: 2px solid rgba(220, 38, 38, 0.4) !important;
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    color: #ffffff !important;
+    font-family: 'Oswald', sans-serif !important;
+    font-weight: 500 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 2px 8px rgba(220, 38, 38, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+select:hover {
+    border-color: rgba(220, 38, 38, 0.7) !important;
+    background-color: rgba(220, 38, 38, 0.1) !important;
+    box-shadow: 
+        0 4px 12px rgba(220, 38, 38, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transform: translateY(-1px);
+}
+
+select:focus {
+    outline: none;
+    border-color: #dc2626 !important;
+    background-color: rgba(220, 38, 38, 0.15) !important;
+    box-shadow: 
+        0 0 0 3px rgba(220, 38, 38, 0.2),
+        0 4px 12px rgba(220, 38, 38, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Select Option Styling */
+select option {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    padding: 10px;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 500;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+select option:hover,
+select option:checked {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.3) 0%, rgba(0, 0, 0, 0.95) 100%);
+}
+
+/* Date Input Styling */
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"],
+input[type="time"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    border: 2px solid rgba(220, 38, 38, 0.4) !important;
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    color: #ffffff !important;
+    font-family: 'Oswald', sans-serif !important;
+    font-weight: 500 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 2px 8px rgba(220, 38, 38, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    position: relative;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dc2626' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3e%3c/rect%3e%3cline x1='16' y1='2' x2='16' y2='6'%3e%3c/line%3e%3cline x1='8' y1='2' x2='8' y2='6'%3e%3c/line%3e%3cline x1='3' y1='10' x2='21' y2='10'%3e%3c/line%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 20px;
+    padding-right: 40px !important;
+}
+
+input[type="date"]:hover,
+input[type="datetime-local"]:hover,
+input[type="month"]:hover,
+input[type="week"]:hover,
+input[type="time"]:hover {
+    border-color: rgba(220, 38, 38, 0.7) !important;
+    background-color: rgba(220, 38, 38, 0.1) !important;
+    box-shadow: 
+        0 4px 12px rgba(220, 38, 38, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transform: translateY(-1px);
+}
+
+input[type="date"]:focus,
+input[type="datetime-local"]:focus,
+input[type="month"]:focus,
+input[type="week"]:focus,
+input[type="time"]:focus {
+    outline: none;
+    border-color: #dc2626 !important;
+    background-color: rgba(220, 38, 38, 0.15) !important;
+    box-shadow: 
+        0 0 0 3px rgba(220, 38, 38, 0.2),
+        0 4px 12px rgba(220, 38, 38, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Calendar Picker Icon Styling */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator,
+input[type="week"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(29%) sepia(89%) saturate(2893%) hue-rotate(346deg) brightness(92%) contrast(93%);
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+input[type="month"]::-webkit-calendar-picker-indicator:hover,
+input[type="week"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Firefox Date Input Styling */
+input[type="date"]::-moz-calendar-picker-indicator,
+input[type="datetime-local"]::-moz-calendar-picker-indicator,
+input[type="month"]::-moz-calendar-picker-indicator,
+input[type="week"]::-moz-calendar-picker-indicator,
+input[type="time"]::-moz-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(29%) sepia(89%) saturate(2893%) hue-rotate(346deg) brightness(92%) contrast(93%);
+}
+
+/* Date Input Placeholder/Empty State */
+input[type="date"]:invalid,
+input[type="datetime-local"]:invalid,
+input[type="month"]:invalid,
+input[type="week"]:invalid {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Apply to all page containers */
+.page-container,
+.dashboard-container,
+.management-container,
+.coach-dashboard-container {
+    background: 
+        repeating-linear-gradient(
+            45deg,
+            rgba(220, 38, 38, 0.03) 0px,
+            rgba(220, 38, 38, 0.03) 2px,
+            transparent 2px,
+            transparent 12px
+        ),
+        linear-gradient(135deg, #000000 0%, #1a1a1a 100%) !important;
+    position: relative;
+}
+
+.page-container::before,
+.dashboard-container::before,
+.management-container::before,
+.coach-dashboard-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(220, 38, 38, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(220, 38, 38, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Page Headers */
+.page-header h1,
+.dashboard-header h1,
+.management-header h1 {
+    font-family: 'Bebas Neue', cursive !important;
+    font-weight: 400 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 4px !important;
+    text-shadow: 
+        2px 2px 4px rgba(0, 0, 0, 0.8),
+        0 0 20px rgba(220, 38, 38, 0.3) !important;
+}
+
+.page-header::after,
+.management-header::after {
+    content: '';
+    display: block;
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(90deg, transparent 0%, #dc2626 50%, transparent 100%);
+    margin: 20px auto 0;
+    border-radius: 2px;
+}
+
+/* All Cards */
+.card,
+.dashboard-card,
+.management-card,
+.package-card,
+.expense-card,
+.payment-card,
+.coach-card,
+.client-card,
+.revenue-card {
+    border: 3px solid rgba(220, 38, 38, 0.4) !important;
+    box-shadow: 
+        0 4px 15px rgba(220, 38, 38, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before,
+.dashboard-card::before,
+.management-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(220, 38, 38, 0.2), transparent);
+    transition: left 0.5s ease;
+    z-index: 1;
+}
+
+.card:hover::before,
+.dashboard-card:hover::before,
+.management-card:hover::before {
+    left: 100%;
+}
+
+.card:hover,
+.dashboard-card:hover,
+.management-card:hover,
+.package-card:hover,
+.coach-card:hover {
+    box-shadow: 
+        0 10px 30px rgba(220, 38, 38, 0.4),
+        0 0 40px rgba(220, 38, 38, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+/* All Headings */
+h1, h2 {
+    font-family: 'Bebas Neue', cursive !important;
+    font-weight: 400 !important;
+    letter-spacing: 3px !important;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6) !important;
+}
+
+h3, h4 {
+    font-family: 'Oswald', sans-serif !important;
+    font-weight: 600 !important;
+    letter-spacing: 2px !important;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6) !important;
+}
+
+h5, h6 {
+    font-family: 'Poppins', sans-serif !important;
+    font-weight: 700 !important;
+    letter-spacing: 1px !important;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* All Buttons */
+button,
+.btn,
+.button,
+.submit-button,
+.card-button,
+.action-button,
+.primary-button {
+    font-family: 'Oswald', sans-serif !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 2px !important;
+    border: 3px solid #dc2626 !important;
+    box-shadow: 
+        0 5px 15px rgba(220, 38, 38, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5) !important;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease !important;
+}
+
+button::before,
+.btn::before,
+.button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+    z-index: 1;
+}
+
+button:hover::before,
+.btn:hover::before,
+.button:hover::before {
+    left: 100%;
+}
+
+button:hover,
+.btn:hover,
+.button:hover {
+    box-shadow: 
+        0 7px 20px rgba(220, 38, 38, 0.5),
+        0 0 30px rgba(220, 38, 38, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    border-color: #ef4444 !important;
+}
+
+/* All Input Fields */
+input,
+textarea,
+select {
+    font-family: 'Poppins', sans-serif !important;
+    font-weight: 400 !important;
+    border: 2px solid rgba(220, 38, 38, 0.4) !important;
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    color: #ffffff !important;
+    transition: all 0.3s ease !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: #dc2626 !important;
+    box-shadow: 
+        0 0 0 3px rgba(220, 38, 38, 0.2),
+        0 3px 10px rgba(220, 38, 38, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+/* All Labels */
+label {
+    font-family: 'Oswald', sans-serif !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.5px !important;
+    color: #ffffff !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* All Tables */
+table {
+    border: 2px solid rgba(220, 38, 38, 0.3) !important;
+}
+
+table thead {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.2) 0%, rgba(0, 0, 0, 0.9) 100%) !important;
+}
+
+table thead th {
+    font-family: 'Oswald', sans-serif !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 2px !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5) !important;
+    border-bottom: 3px solid #dc2626 !important;
+}
+
+table tbody tr {
+    border-bottom: 1px solid rgba(220, 38, 38, 0.2) !important;
+    transition: all 0.2s ease !important;
+}
+
+table tbody tr:hover {
+    background: rgba(220, 38, 38, 0.1) !important;
+    box-shadow: inset 0 0 10px rgba(220, 38, 38, 0.2) !important;
+}
+
+/* Badge Styles */
+.badge,
+.status-badge,
+.category-badge {
+    font-family: 'Oswald', sans-serif !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.5px !important;
+    border: 2px solid currentColor !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Stats and Numbers */
+.stat-number,
+.amount,
+.count,
+.total {
+    font-family: 'Bebas Neue', cursive !important;
+    font-weight: 400 !important;
+    letter-spacing: 2px !important;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Form Sections */
+.form-section,
+.form-container {
+    background: rgba(0, 0, 0, 0.6) !important;
+    border: 3px solid rgba(220, 38, 38, 0.3) !important;
+    border-radius: 12px !important;
+    box-shadow: 
+        0 4px 15px rgba(220, 38, 38, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Modal/Dialog */
+.modal,
+.dialog {
+    background: rgba(0, 0, 0, 0.95) !important;
+    border: 3px solid rgba(220, 38, 38, 0.5) !important;
+    box-shadow: 
+        0 10px 40px rgba(220, 38, 38, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Progress Bars */
+.progress-bar {
+    background: rgba(0, 0, 0, 0.6) !important;
+    border: 2px solid rgba(220, 38, 38, 0.3) !important;
+}
+
+.progress-bar-fill {
+    box-shadow: 
+        0 2px 8px rgba(220, 38, 38, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    border-radius: 6px;
+    border: 2px solid rgba(0, 0, 0, 0.5);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+}
