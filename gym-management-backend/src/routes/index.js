@@ -6,6 +6,7 @@ const trainerRoutes = require('./trainerRoutes');
 const expenseRoutes = require('./expenseRoutes');
 const paymentRoutes = require('./paymentRoutes');
 const packageRoutes = require('./packageRoutes');
+const reportRoutes = require('./reportRoutes');
 const { apiLimiter } = require('../middleware/rateLimiter');
 
 // Apply rate limiter to all API routes
@@ -18,5 +19,6 @@ router.use('/trainers', trainerRoutes);
 router.use('/expenses', expenseRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/packages', packageRoutes);
+router.use('/reports', reportRoutes);
 
 module.exports = router;

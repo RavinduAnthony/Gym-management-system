@@ -20,12 +20,12 @@ const asyncHandler = require('../utils/asyncHandler');
  *         description: Package created successfully
  */
 exports.createPackage = asyncHandler(async (req, res) => {
-  const package = await packageService.createPackage(req.body);
+  const pkg = await packageService.createPackage(req.body);
 
   res.status(201).json({
     success: true,
     message: 'Package created successfully',
-    data: package
+    data: pkg
   });
 });
 
@@ -101,11 +101,11 @@ exports.getActivePackages = asyncHandler(async (req, res) => {
  *         description: Package details
  */
 exports.getPackageById = asyncHandler(async (req, res) => {
-  const package = await packageService.getPackageById(req.params.id);
+  const pkg = await packageService.getPackageById(req.params.id);
 
   res.status(200).json({
     success: true,
-    data: package
+    data: pkg
   });
 });
 
@@ -134,12 +134,12 @@ exports.getPackageById = asyncHandler(async (req, res) => {
  *         description: Package updated successfully
  */
 exports.updatePackage = asyncHandler(async (req, res) => {
-  const package = await packageService.updatePackage(req.params.id, req.body);
+  const pkg = await packageService.updatePackage(req.params.id, req.body);
 
   res.status(200).json({
     success: true,
     message: 'Package updated successfully',
-    data: package
+    data: pkg
   });
 });
 

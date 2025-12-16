@@ -1,4 +1,5 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
 /**
  * @swagger
@@ -30,51 +31,78 @@ const mongoose = require('mongoose');
  *           type: number
  */
 
-const expenseSchema = new mongoose.Schema({
+const Expense = sequelize.define('Expense', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   category: {
-    type: String,
-    enum: ['equipment', 'maintenance', 'utilities', 'salaries', 'rent', 'supplies', 'other'],
-    required: [true, 'Category is required']
+    type: DataTypes.ENUM('equipment', 'maintenance', 'utilities', 'salaries', 'rent', 'supplies', 'other'),
+    allowNull: false
   },
   amount: {
-    type: Number,
-    required: [true, 'Amount is required'],
-    min: [0, 'Amount cannot be negative']
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    validate: {
+      min: {
+        args: 0,
+        msg: 'Amount cannot be negative'
+      }
+    }
   },
   description: {
-    type: String,
-    required: [true, 'Description is required'],
-    maxlength: [500, 'Description cannot exceed 500 characters']
+    type: DataTypes.TEXT,
+    allowNull: false,
+    validate: {
+      len: {
+        args: [1, 500],
+        msg: 'Description cannot exceed 500 characters'
+      }
+    }
   },
   date: {
-    type: Date,
-    default: Date.now
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   },
   addedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
   },
   month: {
-    type: Number,
-    min: 1,
-    max: 12
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    validate: {
+      min: 1,
+      max: 12
+    }
   },
   year: {
-    type: Number
+    type: DataTypes.INTEGER,
+    allowNull: true
   }
 }, {
+  tableName: 'Expenses',
   timestamps: true
 });
 
-// Set month and year before saving
-expenseSchema.pre('save', function(next) {
-  if (this.isNew) {
-    const date = this.date || new Date();
-    this.month = date.getMonth() + 1;
-    this.year = date.getFullYear();
-  }
-  next();
+// Set month and year before creation
+Expense.beforeCreate((expense) => {
+  const date = expense.date || new Date();
+  expense.month = date.getMonth() + 1;
+  expense.year = date.getFullYear();
 });
 
-module.exports = mongoose.model('Expense', expenseSchema);
+// Define associations
+Expense.associate = (models) => {
+  Expense.belongsTo(models.User, {
+    foreignKey: 'addedBy',
+    as: 'addedByUser'
+  });
+};
+
+module.exports = Expense;

@@ -1,4 +1,5 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
 /**
  * @swagger
@@ -37,56 +38,96 @@ const mongoose = require('mongoose');
  *           description: Reference to User (admin or coach)
  */
 
-const paymentSchema = new mongoose.Schema({
+const Payment = sequelize.define('Payment', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, 'User ID is required']
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
   },
   amount: {
-    type: Number,
-    required: [true, 'Amount is required'],
-    min: [0, 'Amount cannot be negative']
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    validate: {
+      min: {
+        args: 0,
+        msg: 'Amount cannot be negative'
+      }
+    }
   },
   paymentDate: {
-    type: Date,
-    default: Date.now
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   },
   paymentMonth: {
-    type: Number,
-    required: [true, 'Payment month is required'],
-    min: 1,
-    max: 12
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    validate: {
+      min: 1,
+      max: 12
+    }
   },
   paymentYear: {
-    type: Number,
-    required: [true, 'Payment year is required']
+    type: DataTypes.INTEGER,
+    allowNull: false
   },
   paymentMethod: {
-    type: String,
-    enum: ['cash', 'card', 'bank_transfer'],
-    default: 'cash'
+    type: DataTypes.ENUM('cash', 'card', 'bank_transfer'),
+    defaultValue: 'cash'
   },
   status: {
-    type: String,
-    enum: ['paid', 'pending', 'overdue'],
-    default: 'paid'
+    type: DataTypes.ENUM('paid', 'pending', 'overdue'),
+    defaultValue: 'paid'
   },
   notes: {
-    type: String,
-    maxlength: [500, 'Notes cannot exceed 500 characters']
+    type: DataTypes.TEXT,
+    allowNull: true,
+    validate: {
+      len: {
+        args: [0, 500],
+        msg: 'Notes cannot exceed 500 characters'
+      }
+    }
   },
   addedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
   }
 }, {
-  timestamps: true
+  tableName: 'Payments',
+  timestamps: true,
+  indexes: [
+    {
+      fields: ['paymentMonth', 'paymentYear']
+    },
+    {
+      fields: ['userId', 'paymentMonth', 'paymentYear']
+    }
+  ]
 });
 
-// Index for efficient month/year queries
-paymentSchema.index({ paymentMonth: 1, paymentYear: 1 });
-paymentSchema.index({ userId: 1, paymentMonth: 1, paymentYear: 1 });
+// Define associations
+Payment.associate = (models) => {
+  Payment.belongsTo(models.User, {
+    foreignKey: 'userId',
+    as: 'user'
+  });
+  
+  Payment.belongsTo(models.User, {
+    foreignKey: 'addedBy',
+    as: 'addedByUser'
+  });
+};
 
-module.exports = mongoose.model('Payment', paymentSchema);
+module.exports = Payment;

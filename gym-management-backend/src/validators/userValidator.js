@@ -1,6 +1,15 @@
 const Joi = require('joi');
 
 const registerSchema = Joi.object({
+  username: Joi.string()
+    .min(3)
+    .max(20)
+    .required()
+    .messages({
+      'string.empty': 'Username is required',
+      'string.min': 'Username must be at least 3 characters',
+      'string.max': 'Username cannot exceed 20 characters'
+    }),
   firstName: Joi.string()
     .max(50)
     .required()
@@ -74,11 +83,13 @@ const registerSchema = Joi.object({
 });
 
 const loginSchema = Joi.object({
+  identifier: Joi.string()
+    .messages({
+      'string.empty': 'Username or email is required'
+    }),
   email: Joi.string()
     .email()
-    .required()
     .messages({
-      'string.empty': 'Email is required',
       'string.email': 'Please provide a valid email address'
     }),
   password: Joi.string()
@@ -86,7 +97,7 @@ const loginSchema = Joi.object({
     .messages({
       'string.empty': 'Password is required'
     })
-});
+}).or('identifier', 'email'); // Require at least one of identifier or email
 
 const updateUserSchema = Joi.object({
   firstName: Joi.string().max(50),

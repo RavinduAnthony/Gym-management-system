@@ -1,5 +1,6 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
+const { sequelize } = require('../config/database');
 
 /**
  * @swagger
@@ -54,148 +55,224 @@ const bcrypt = require('bcryptjs');
  *           default: active
  */
 
-const userSchema = new mongoose.Schema({
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  username: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    unique: true,
+    validate: {
+      len: {
+        args: [3, 20],
+        msg: 'Username must be between 3 and 20 characters'
+      }
+    }
+  },
   firstName: {
-    type: String,
-    required: [true, 'First name is required'],
-    trim: true,
-    maxlength: [50, 'First name cannot exceed 50 characters']
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    validate: {
+      len: {
+        args: [1, 50],
+        msg: 'First name cannot exceed 50 characters'
+      }
+    }
   },
   lastName: {
-    type: String,
-    required: [true, 'Last name is required'],
-    trim: true,
-    maxlength: [50, 'Last name cannot exceed 50 characters']
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    validate: {
+      len: {
+        args: [1, 50],
+        msg: 'Last name cannot exceed 50 characters'
+      }
+    }
   },
   email: {
-    type: String,
-    required: [true, 'Email is required'],
+    type: DataTypes.STRING,
+    allowNull: false,
     unique: true,
-    lowercase: true,
-    trim: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address']
+    validate: {
+      isEmail: {
+        msg: 'Please provide a valid email address'
+      }
+    }
   },
   password: {
-    type: String,
-    required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters'],
-    select: false
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      len: {
+        args: [6, 255],
+        msg: 'Password must be at least 6 characters'
+      }
+    }
   },
   mobileNumber: {
-    type: String,
-    required: [true, 'Mobile number is required'],
-    match: [/^\d{10}$/, 'Mobile number must be 10 digits']
+    type: DataTypes.STRING(10),
+    allowNull: false,
+    validate: {
+      is: {
+        args: /^\d{10}$/,
+        msg: 'Mobile number must be 10 digits'
+      }
+    }
   },
   nicNumber: {
-    type: String,
-    required: [true, 'NIC number is required'],
+    type: DataTypes.STRING(12),
+    allowNull: false,
     unique: true,
-    match: [/^(\d{9}[vVxX]|\d{12})$/, 'Invalid NIC format']
+    validate: {
+      is: {
+        args: /^(\d{9}[vVxX]|\d{12})$/,
+        msg: 'Invalid NIC format'
+      }
+    }
   },
   address: {
-    type: String,
-    required: [true, 'Address is required'],
-    maxlength: [200, 'Address cannot exceed 200 characters']
+    type: DataTypes.STRING(200),
+    allowNull: false,
+    validate: {
+      len: {
+        args: [1, 200],
+        msg: 'Address cannot exceed 200 characters'
+      }
+    }
   },
   height: {
-    type: Number,
-    min: [50, 'Height must be at least 50 cm'],
-    max: [300, 'Height cannot exceed 300 cm']
+    type: DataTypes.FLOAT,
+    allowNull: true,
+    validate: {
+      min: {
+        args: 50,
+        msg: 'Height must be at least 50 cm'
+      },
+      max: {
+        args: 300,
+        msg: 'Height cannot exceed 300 cm'
+      }
+    }
   },
   weight: {
-    type: Number,
-    min: [20, 'Weight must be at least 20 kg'],
-    max: [300, 'Weight cannot exceed 300 kg']
+    type: DataTypes.FLOAT,
+    allowNull: true,
+    validate: {
+      min: {
+        args: 20,
+        msg: 'Weight must be at least 20 kg'
+      },
+      max: {
+        args: 300,
+        msg: 'Weight cannot exceed 300 kg'
+      }
+    }
   },
   packageType: {
-    type: String,
-    enum: {
-      values: ['basic', 'standard', 'premium'],
-      message: 'Package type must be basic, standard, or premium'
-    },
-    required: [true, 'Package type is required']
+    type: DataTypes.ENUM('basic', 'standard', 'premium'),
+    allowNull: false,
+    validate: {
+      isIn: {
+        args: [['basic', 'standard', 'premium']],
+        msg: 'Package type must be basic, standard, or premium'
+      }
+    }
   },
   membershipStartDate: {
-    type: Date,
-    default: Date.now
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   },
   membershipEndDate: {
-    type: Date
+    type: DataTypes.DATE,
+    allowNull: true
   },
   role: {
-    type: String,
-    enum: ['member', 'trainer', 'admin', 'coach'],
-    default: 'member'
+    type: DataTypes.ENUM('member', 'trainer', 'admin', 'coach'),
+    defaultValue: 'member'
   },
   status: {
-    type: String,
-    enum: ['active', 'inactive', 'suspended'],
-    default: 'active'
+    type: DataTypes.ENUM('active', 'inactive', 'suspended'),
+    defaultValue: 'active'
   },
-  assignedCoach: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+  assignedCoachId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
   },
-  assignedClients: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
   refreshToken: {
-    type: String,
-    select: false
+    type: DataTypes.STRING,
+    allowNull: true
   },
   passwordResetToken: {
-    type: String,
-    select: false
+    type: DataTypes.STRING,
+    allowNull: true
   },
   passwordResetExpire: {
-    type: Date,
-    select: false
+    type: DataTypes.DATE,
+    allowNull: true
   }
 }, {
+  tableName: 'Users',
   timestamps: true
 });
 
 // Hash password before saving
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) {
-    return next();
+User.beforeSave(async (user) => {
+  if (user.changed('password')) {
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(user.password, salt);
   }
-  
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
-// Calculate membership end date based on package type
-userSchema.pre('save', function(next) {
-  if (this.isNew && this.packageType) {
+// Calculate membership end date before creation
+User.beforeCreate(async (user) => {
+  if (user.packageType) {
     const durationMap = {
       basic: 1,
       standard: 3,
       premium: 12
     };
     
-    const months = durationMap[this.packageType] || 1;
-    this.membershipEndDate = new Date(this.membershipStartDate);
-    this.membershipEndDate.setMonth(this.membershipEndDate.getMonth() + months);
+    const months = durationMap[user.packageType] || 1;
+    const endDate = new Date(user.membershipStartDate || new Date());
+    endDate.setMonth(endDate.getMonth() + months);
+    user.membershipEndDate = endDate;
   }
-  next();
 });
 
-// Compare password method
-userSchema.methods.comparePassword = async function(candidatePassword) {
+// Instance method to compare passwords
+User.prototype.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Get user without sensitive data
-userSchema.methods.toJSON = function() {
-  const user = this.toObject();
-  delete user.password;
-  delete user.refreshToken;
-  delete user.passwordResetToken;
-  delete user.passwordResetExpire;
-  return user;
+// Remove sensitive data from JSON output
+User.prototype.toJSON = function() {
+  const values = { ...this.get() };
+  delete values.password;
+  delete values.refreshToken;
+  delete values.passwordResetToken;
+  delete values.passwordResetExpire;
+  return values;
 };
 
-module.exports = mongoose.model('User', userSchema);
+// Define associations
+User.associate = (models) => {
+  // Self-referencing relationship for coach-client
+  User.belongsTo(models.User, {
+    as: 'assignedCoach',
+    foreignKey: 'assignedCoachId'
+  });
+  
+  User.hasMany(models.User, {
+    as: 'assignedClients',
+    foreignKey: 'assignedCoachId'
+  });
+};
+
+module.exports = User;

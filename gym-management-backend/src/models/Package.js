@@ -1,4 +1,5 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
 /**
  * @swagger
@@ -33,45 +34,71 @@ const mongoose = require('mongoose');
  *           type: boolean
  */
 
-const packageSchema = new mongoose.Schema({
+const Package = sequelize.define('Package', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   name: {
-    type: String,
-    required: [true, 'Package name is required'],
-    trim: true,
-    maxlength: [100, 'Package name cannot exceed 100 characters']
+    type: DataTypes.STRING(100),
+    allowNull: false,
+    validate: {
+      len: {
+        args: [1, 100],
+        msg: 'Package name cannot exceed 100 characters'
+      }
+    }
   },
   packageType: {
-    type: String,
-    enum: ['basic', 'standard', 'premium', 'custom'],
-    required: [true, 'Package type is required']
+    type: DataTypes.ENUM('basic', 'standard', 'premium', 'custom'),
+    allowNull: false
   },
   duration: {
-    type: Number,
-    required: [true, 'Duration is required'],
-    min: [1, 'Duration must be at least 1 month']
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    validate: {
+      min: {
+        args: 1,
+        msg: 'Duration must be at least 1 month'
+      }
+    }
   },
   price: {
-    type: Number,
-    required: [true, 'Price is required'],
-    min: [0, 'Price cannot be negative']
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    validate: {
+      min: {
+        args: 0,
+        msg: 'Price cannot be negative'
+      }
+    }
   },
-  features: [{
-    type: String
-  }],
+  features: {
+    type: DataTypes.JSONB,
+    defaultValue: []
+  },
   description: {
-    type: String,
-    maxlength: [500, 'Description cannot exceed 500 characters']
+    type: DataTypes.TEXT,
+    allowNull: true,
+    validate: {
+      len: {
+        args: [0, 500],
+        msg: 'Description cannot exceed 500 characters'
+      }
+    }
   },
   coachingIncluded: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
   isActive: {
-    type: Boolean,
-    default: true
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   }
 }, {
+  tableName: 'Packages',
   timestamps: true
 });
 
-module.exports = mongoose.model('Package', packageSchema);
+module.exports = Package;

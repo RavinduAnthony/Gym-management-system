@@ -132,18 +132,51 @@ export default function Registration() {
         return true;
     }
 
-    function handleSubmit(event: React.FormEvent) {
+    async function handleSubmit(event: React.FormEvent) {
         event.preventDefault();
 
-        if (validateForm()) {
-            // Handle registration logic here
+        if (!validateForm()) {
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username,
+                    email,
+                    password,
+                    firstName: username, // Temporary - you may want to add separate fields
+                    lastName: username,
+                    mobileNumber: '0000000000', // Temporary
+                    nicNumber: '000000000V', // Temporary
+                    address: 'N/A',
+                    packageType: 'basic',
+                    role: 'member'
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setAlertMessage(data.message || 'Registration failed');
+                setAlertType('error');
+                return;
+            }
+
             setAlertMessage("Account created successfully!");
             setAlertType("success");
             
-            // Navigate to dashboard after 2 seconds
+            // Navigate to login after 2 seconds
             setTimeout(() => {
-                navigate('/');
+                navigate('/login');
             }, 2000);
+        } catch (error) {
+            setAlertMessage('Network error. Please try again.');
+            setAlertType('error');
         }
     }
 

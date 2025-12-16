@@ -6,8 +6,8 @@ class PackageService {
   // Create new package
   async createPackage(packageData) {
     try {
-      const package = await Package.create(packageData);
-      return package;
+      const pkg = await Package.create(packageData);
+      return pkg;
     } catch (error) {
       logger.error('Error creating package:', error);
       throw error;
@@ -24,29 +24,29 @@ class PackageService {
     } = options;
 
     try {
-      const query = {};
+      const where = {};
 
       // Filter by package type
       if (packageType) {
-        query.packageType = packageType;
+        where.packageType = packageType;
       }
 
       // Filter by active status
       if (isActive !== undefined) {
-        query.isActive = isActive === 'true';
+        where.isActive = isActive === 'true';
       }
 
-      const packages = await Package.find(query)
-        .limit(limit * 1)
-        .skip((page - 1) * limit)
-        .sort({ createdAt: -1 });
-
-      const count = await Package.countDocuments(query);
+      const { count, rows: packages } = await Package.findAndCountAll({
+        where,
+        limit: parseInt(limit),
+        offset: (page - 1) * limit,
+        order: [['createdAt', 'DESC']]
+      });
 
       return {
         packages,
         totalPages: Math.ceil(count / limit),
-        currentPage: page,
+        currentPage: parseInt(page),
         total: count
       };
     } catch (error) {
@@ -58,13 +58,13 @@ class PackageService {
   // Get package by ID
   async getPackageById(id) {
     try {
-      const package = await Package.findById(id);
+      const pkg = await Package.findByPk(id);
       
-      if (!package) {
+      if (!pkg) {
         throw new ApiError(404, 'Package not found');
       }
 
-      return package;
+      return pkg;
     } catch (error) {
       logger.error('Error getting package by ID:', error);
       throw error;
@@ -74,17 +74,15 @@ class PackageService {
   // Update package
   async updatePackage(id, updateData) {
     try {
-      const package = await Package.findByIdAndUpdate(
-        id,
-        updateData,
-        { new: true, runValidators: true }
-      );
+      const pkg = await Package.findByPk(id);
 
-      if (!package) {
+      if (!pkg) {
         throw new ApiError(404, 'Package not found');
       }
 
-      return package;
+      await pkg.update(updateData);
+
+      return pkg;
     } catch (error) {
       logger.error('Error updating package:', error);
       throw error;
@@ -94,11 +92,13 @@ class PackageService {
   // Delete package
   async deletePackage(id) {
     try {
-      const package = await Package.findByIdAndDelete(id);
+      const pkg = await Package.findByPk(id);
 
-      if (!package) {
+      if (!pkg) {
         throw new ApiError(404, 'Package not found');
       }
+
+      await pkg.destroy();
 
       return { message: 'Package deleted successfully' };
     } catch (error) {
@@ -110,8 +110,10 @@ class PackageService {
   // Get active packages only
   async getActivePackages() {
     try {
-      const packages = await Package.find({ isActive: true })
-        .sort({ price: 1 });
+      const packages = await Package.findAll({
+        where: { isActive: true },
+        order: [['price', 'ASC']]
+      });
 
       return packages;
     } catch (error) {

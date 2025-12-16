@@ -1,4 +1,5 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
 /**
  * @swagger
@@ -46,72 +47,113 @@ const mongoose = require('mongoose');
  *           enum: [active, inactive]
  */
 
-const trainerSchema = new mongoose.Schema({
+const Trainer = sequelize.define('Trainer', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   firstName: {
-    type: String,
-    required: [true, 'First name is required'],
-    trim: true,
-    maxlength: [50, 'First name cannot exceed 50 characters']
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    validate: {
+      len: {
+        args: [1, 50],
+        msg: 'First name cannot exceed 50 characters'
+      }
+    }
   },
   lastName: {
-    type: String,
-    required: [true, 'Last name is required'],
-    trim: true,
-    maxlength: [50, 'Last name cannot exceed 50 characters']
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    validate: {
+      len: {
+        args: [1, 50],
+        msg: 'Last name cannot exceed 50 characters'
+      }
+    }
   },
   email: {
-    type: String,
-    required: [true, 'Email is required'],
+    type: DataTypes.STRING,
+    allowNull: false,
     unique: true,
-    lowercase: true,
-    trim: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address']
+    validate: {
+      isEmail: {
+        msg: 'Please provide a valid email address'
+      }
+    }
   },
   mobileNumber: {
-    type: String,
-    required: [true, 'Mobile number is required'],
-    match: [/^\d{10}$/, 'Mobile number must be 10 digits']
+    type: DataTypes.STRING(10),
+    allowNull: false,
+    validate: {
+      is: {
+        args: /^\d{10}$/,
+        msg: 'Mobile number must be 10 digits'
+      }
+    }
   },
   nicNumber: {
-    type: String,
-    required: [true, 'NIC number is required'],
+    type: DataTypes.STRING(12),
+    allowNull: false,
     unique: true,
-    match: [/^(\d{9}[vVxX]|\d{12})$/, 'Invalid NIC format']
+    validate: {
+      is: {
+        args: /^(\d{9}[vVxX]|\d{12})$/,
+        msg: 'Invalid NIC format'
+      }
+    }
   },
-  specialization: [{
-    type: String,
-    required: true
-  }],
+  specialization: {
+    type: DataTypes.JSONB,
+    allowNull: false,
+    defaultValue: []
+  },
   experience: {
-    type: Number,
-    min: [0, 'Experience cannot be negative']
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    validate: {
+      min: {
+        args: 0,
+        msg: 'Experience cannot be negative'
+      }
+    }
   },
-  certification: [{
-    type: String
-  }],
+  certification: {
+    type: DataTypes.JSONB,
+    defaultValue: []
+  },
   hourlyRate: {
-    type: Number,
-    min: [0, 'Hourly rate cannot be negative']
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    validate: {
+      min: {
+        args: 0,
+        msg: 'Hourly rate cannot be negative'
+      }
+    }
   },
-  availability: [{
-    day: {
-      type: String,
-      enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    },
-    startTime: String,
-    endTime: String
-  }],
+  availability: {
+    type: DataTypes.JSONB,
+    defaultValue: []
+  },
   bio: {
-    type: String,
-    maxlength: [500, 'Bio cannot exceed 500 characters']
+    type: DataTypes.TEXT,
+    allowNull: true,
+    validate: {
+      len: {
+        args: [0, 500],
+        msg: 'Bio cannot exceed 500 characters'
+      }
+    }
   },
   status: {
-    type: String,
-    enum: ['active', 'inactive'],
-    default: 'active'
+    type: DataTypes.ENUM('active', 'inactive'),
+    defaultValue: 'active'
   }
 }, {
+  tableName: 'Trainers',
   timestamps: true
 });
 
-module.exports = mongoose.model('Trainer', trainerSchema);
+module.exports = Trainer;

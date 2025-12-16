@@ -1,5 +1,5 @@
 const app = require('./app');
-const connectDB = require('./config/database');
+const { connectDB } = require('./config/database');
 const logger = require('./utils/logger');
 
 // Load environment variables
@@ -7,7 +7,7 @@ require('dotenv').config();
 
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB
+// Connect to PostgreSQL
 connectDB();
 
 // Start server

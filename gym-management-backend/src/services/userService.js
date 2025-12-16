@@ -1,3 +1,5 @@
+const { Op } = require('sequelize');
+const { sequelize } = require('../config/database');
 const User = require('../models/User');
 const ApiError = require('../utils/ApiError');
 const logger = require('../utils/logger');
@@ -26,44 +28,44 @@ class UserService {
     } = options;
 
     try {
-      const query = {};
+      const where = {};
 
       // Search by name or email
       if (search) {
-        query.$or = [
-          { firstName: { $regex: search, $options: 'i' } },
-          { lastName: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } }
+        where[Op.or] = [
+          { firstName: { [Op.iLike]: `%${search}%` } },
+          { lastName: { [Op.iLike]: `%${search}%` } },
+          { email: { [Op.iLike]: `%${search}%` } }
         ];
       }
 
       // Filter by package type
       if (packageType) {
-        query.packageType = packageType;
+        where.packageType = packageType;
       }
 
       // Filter by status
       if (status) {
-        query.status = status;
+        where.status = status;
       }
 
       // Filter by role
       if (role) {
-        query.role = role;
+        where.role = role;
       }
 
-      const users = await User.find(query)
-        .select('-password')
-        .limit(limit * 1)
-        .skip((page - 1) * limit)
-        .sort({ createdAt: -1 });
-
-      const count = await User.countDocuments(query);
+      const { count, rows: users } = await User.findAndCountAll({
+        where,
+        attributes: { exclude: ['password', 'refreshToken', 'passwordResetToken', 'passwordResetExpire'] },
+        limit: parseInt(limit),
+        offset: (page - 1) * limit,
+        order: [['createdAt', 'DESC']]
+      });
 
       return {
         users,
         totalPages: Math.ceil(count / limit),
-        currentPage: page,
+        currentPage: parseInt(page),
         total: count
       };
     } catch (error) {
@@ -75,7 +77,9 @@ class UserService {
   // Get user by ID
   async getUserById(id) {
     try {
-      const user = await User.findById(id).select('-password');
+      const user = await User.findByPk(id, {
+        attributes: { exclude: ['password', 'refreshToken', 'passwordResetToken', 'passwordResetExpire'] }
+      });
       
       if (!user) {
         throw new ApiError(404, 'User not found');
@@ -91,15 +95,18 @@ class UserService {
   // Update user
   async updateUser(id, updateData) {
     try {
-      const user = await User.findByIdAndUpdate(
-        id,
-        updateData,
-        { new: true, runValidators: true }
-      ).select('-password');
+      const user = await User.findByPk(id);
 
       if (!user) {
         throw new ApiError(404, 'User not found');
       }
+
+      await user.update(updateData);
+      
+      // Reload to exclude sensitive fields
+      await user.reload({
+        attributes: { exclude: ['password', 'refreshToken', 'passwordResetToken', 'passwordResetExpire'] }
+      });
 
       return user;
     } catch (error) {
@@ -111,11 +118,13 @@ class UserService {
   // Delete user
   async deleteUser(id) {
     try {
-      const user = await User.findByIdAndDelete(id);
+      const user = await User.findByPk(id);
 
       if (!user) {
         throw new ApiError(404, 'User not found');
       }
+
+      await user.destroy();
 
       return { message: 'User deleted successfully' };
     } catch (error) {
@@ -127,26 +136,33 @@ class UserService {
   // Get user statistics
   async getUserStats() {
     try {
-      const stats = await User.aggregate([
-        {
-          $group: {
-            _id: '$packageType',
-            count: { $sum: 1 }
-          }
-        }
-      ]);
+      // Group by package type
+      const packageStats = await User.findAll({
+        attributes: [
+          'packageType',
+          [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+        ],
+        group: ['packageType'],
+        raw: true
+      });
 
-      const totalUsers = await User.countDocuments();
-      const activeUsers = await User.countDocuments({ status: 'active' });
-      const totalClients = await User.countDocuments({ role: 'member' });
-      const totalCoaches = await User.countDocuments({ role: 'coach' });
+      const totalUsers = await User.count();
+      const activeUsers = await User.count({ where: { status: 'active' } });
+      const totalClients = await User.count({ where: { role: 'member' } });
+      const totalCoaches = await User.count({ where: { role: 'coach' } });
+
+      // Format stats to match expected structure
+      const byPackage = packageStats.map(stat => ({
+        _id: stat.packageType,
+        count: parseInt(stat.count)
+      }));
 
       return {
         total: totalUsers,
         active: activeUsers,
         totalClients,
         totalCoaches,
-        byPackage: stats
+        byPackage
       };
     } catch (error) {
       logger.error('Error getting user stats:', error);
@@ -158,27 +174,25 @@ class UserService {
   async assignCoachToClient(clientId, coachId) {
     try {
       // Verify coach exists and has coach role
-      const coach = await User.findById(coachId);
+      const coach = await User.findByPk(coachId);
       if (!coach || coach.role !== 'coach') {
         throw new ApiError(400, 'Invalid coach ID');
       }
 
       // Update client with assigned coach
-      const client = await User.findByIdAndUpdate(
-        clientId,
-        { assignedCoach: coachId },
-        { new: true }
-      ).select('-password');
+      const client = await User.findByPk(clientId);
 
       if (!client) {
         throw new ApiError(404, 'Client not found');
       }
 
-      // Add client to coach's assigned clients
-      if (!coach.assignedClients.includes(clientId)) {
-        coach.assignedClients.push(clientId);
-        await coach.save();
-      }
+      client.assignedCoachId = coachId;
+      await client.save();
+
+      // Reload to exclude sensitive fields
+      await client.reload({
+        attributes: { exclude: ['password', 'refreshToken', 'passwordResetToken', 'passwordResetExpire'] }
+      });
 
       return client;
     } catch (error) {
@@ -190,9 +204,14 @@ class UserService {
   // Get clients assigned to a coach
   async getCoachClients(coachId) {
     try {
-      const clients = await User.find({ assignedCoach: coachId, role: 'member' })
-        .select('-password')
-        .sort({ createdAt: -1 });
+      const clients = await User.findAll({
+        where: { 
+          assignedCoachId: coachId,
+          role: 'member'
+        },
+        attributes: { exclude: ['password', 'refreshToken', 'passwordResetToken', 'passwordResetExpire'] },
+        order: [['createdAt', 'DESC']]
+      });
 
       return clients;
     } catch (error) {
@@ -204,9 +223,14 @@ class UserService {
   // Get all coaches
   async getAllCoaches() {
     try {
-      const coaches = await User.find({ role: 'coach', status: 'active' })
-        .select('firstName lastName email mobileNumber specialization')
-        .sort({ firstName: 1 });
+      const coaches = await User.findAll({
+        where: {
+          role: 'coach',
+          status: 'active'
+        },
+        attributes: ['id', 'firstName', 'lastName', 'email', 'mobileNumber'],
+        order: [['firstName', 'ASC']]
+      });
 
       return coaches;
     } catch (error) {

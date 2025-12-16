@@ -82,8 +82,10 @@ exports.register = asyncHandler(async (req, res) => {
  *         description: Login successful
  */
 exports.login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-  const result = await authService.login(email, password);
+  const { identifier, email, password } = req.body;
+  // Support both 'identifier' (new frontend) and 'email' (old format)
+  const loginIdentifier = identifier || email;
+  const result = await authService.login(loginIdentifier, password);
 
   res.status(200).json({
     success: true,
@@ -167,20 +169,20 @@ exports.logout = asyncHandler(async (req, res) => {
  */
 exports.forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
-  const resetToken = await authService.forgotPassword(email);
+  const result = await authService.forgotPassword(email);
 
   res.status(200).json({
     success: true,
-    message: 'Password reset token generated',
-    resetToken // In production, send this via email
+    message: result.message,
+    otp: result.otp // Remove in production
   });
 });
 
 /**
  * @swagger
- * /api/auth/reset-password:
+ * /api/auth/verify-otp:
  *   post:
- *     summary: Reset password
+ *     summary: Verify OTP for password reset
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -189,10 +191,47 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - resetToken
+ *               - email
+ *               - otp
+ *             properties:
+ *               email:
+ *                 type: string
+ *               otp:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: OTP verified successfully
+ */
+exports.verifyOTP = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+  const result = await authService.verifyOTP(email, otp);
+
+  res.status(200).json({
+    success: true,
+    message: result.message
+  });
+});
+
+/**
+ * @swagger
+ * /api/auth/reset-password:
+ *   post:
+ *     summary: Reset password with OTP
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - otp
  *               - newPassword
  *             properties:
- *               resetToken:
+ *               email:
+ *                 type: string
+ *               otp:
  *                 type: string
  *               newPassword:
  *                 type: string
@@ -201,12 +240,12 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
  *         description: Password reset successful
  */
 exports.resetPassword = asyncHandler(async (req, res) => {
-  const { resetToken, newPassword } = req.body;
-  await authService.resetPassword(resetToken, newPassword);
+  const { email, otp, newPassword } = req.body;
+  const result = await authService.resetPassword(email, otp, newPassword);
 
   res.status(200).json({
     success: true,
-    message: 'Password reset successful'
+    message: result.message
   });
 });
 
