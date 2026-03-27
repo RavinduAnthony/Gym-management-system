@@ -1,0 +1,481 @@
+# Gym Application — React Frontend Architecture Proposal
+
+Based on a thorough analysis of the BRD, here is a comprehensive frontend architecture designed for **scalability, multi-tenancy, role-based access, and future mobile expansion**.
+
+---
+
+## 1. Technology Stack
+
+| Layer | Choice | Rationale |
+|---|---|---|
+| **Framework** | React 18+ with Vite | Fast builds, modern DX, Vercel-ready |
+| **Language** | TypeScript | Type safety across a large domain model |
+| **Routing** | React Router v7 | Nested layouts, route guards, lazy loading |
+| **State Management** | Zustand (global) + React Query/TanStack Query (server) | Zustand for auth/UI state; TanStack Query for all API data caching, pagination, mutations |
+| **Forms** | React Hook Form + Zod | Performant forms with schema-based validation |
+| **UI Library** | Shadcn/ui (Radix + Tailwind) | Accessible, composable, themeable component primitives |
+| **Styling** | Tailwind CSS v4 | Utility-first, design-token friendly, consistent theming |
+| **Charts** | Recharts | Lightweight, React-native charting for dashboard analytics |
+| **Tables** | TanStack Table v8 | Headless, supports sorting, filtering, pagination |
+| **Export** | jsPDF + SheetJS (xlsx) | PDF and Excel report exports |
+| **HTTP Client** | Axios | Interceptors for auth tokens, tenant headers, error handling |
+| **Notifications** | React Hot Toast / Sonner | Lightweight toast notifications |
+| **Date Handling** | date-fns | Tree-shakeable, timezone-aware date utilities |
+| **Icons** | Lucide React | Clean, consistent icon set |
+
+---
+
+## 2. Project Structure (Feature-Sliced Design)
+
+```
+src/
+├── app/                          # App shell & providers
+│   ├── App.tsx                   # Root component
+│   ├── providers.tsx             # Compose all providers
+│   ├── router.tsx                # Route definitions
+│   └── main.tsx                  # Entry point
+│
+├── core/                         # Shared infrastructure
+│   ├── api/
+│   │   ├── axios-instance.ts     # Axios config with tenant/auth interceptors
+│   │   └── endpoints.ts          # API endpoint constants
+│   ├── auth/
+│   │   ├── auth-context.tsx      # Auth provider & hook
+│   │   ├── auth-guard.tsx        # Protected route wrapper
+│   │   └── role-guard.tsx        # Role-based access wrapper
+│   ├── theme/                    # ★ Centralized Theme System
+│   │   ├── theme-provider.tsx    # Applies tokens to :root, wraps app
+│   │   ├── theme-store.ts        # Zustand store for active theme
+│   │   ├── theme-tokens.ts       # Token type definitions & presets
+│   │   ├── theme-utils.ts        # Helpers: contrast calc, token merge
+│   │   └── use-theme.ts          # Hook: read/switch theme anywhere
+│   ├── hooks/                    # Shared custom hooks
+│   ├── types/                    # Global TypeScript types & enums
+│   │   ├── user.ts
+│   │   ├── tenant.ts
+│   │   └── api-response.ts
+│   ├── utils/                    # Formatters, helpers
+│   └── constants/                # App-wide constants
+│
+├── components/                   # Shared UI components
+│   ├── ui/                       # Base components (Shadcn/ui)
+│   │   ├── button.tsx
+│   │   ├── input.tsx
+│   │   ├── dialog.tsx
+│   │   ├── data-table.tsx        # Generic data table wrapper
+│   │   └── ...
+│   ├── layout/
+│   │   ├── app-layout.tsx        # Sidebar + header + content shell
+│   │   ├── sidebar.tsx           # Role-aware navigation sidebar
+│   │   ├── header.tsx            # Top bar with user menu & gym selector
+│   │   └── breadcrumbs.tsx
+│   └── common/
+│       ├── stat-card.tsx         # Dashboard metric card
+│       ├── status-badge.tsx      # Active/Inactive/Expired badges
+│       ├── confirm-dialog.tsx    # Reusable confirmation modal
+│       ├── export-button.tsx     # PDF/Excel export trigger
+│       └── empty-state.tsx
+│
+├── features/                     # Feature modules (one per BRD section)
+│   │
+│   ├── gym-registration/         # BRD §1 — Gym Registration
+│   │   ├── api/                  # API hooks (useCreateGym, useGymProfile)
+│   │   ├── components/           # RegistrationForm, SetupWizard, etc.
+│   │   ├── pages/                # RegisterPage, SetupWizardPage
+│   │   ├── schemas/              # Zod validation schemas
+│   │   └── types/                # Feature-specific types
+│   │
+│   ├── members/                  # BRD §2 — Member Management
+│   │   ├── api/                  # useMembers, useMemberById, useCreateMember
+│   │   ├── components/           # MemberForm, MemberList, MemberProfile,
+│   │   │                         # RenewalDialog, PaymentHistory
+│   │   ├── pages/                # MembersListPage, MemberDetailPage, AddMemberPage
+│   │   ├── schemas/
+│   │   └── types/
+│   │
+│   ├── memberships/              # BRD §3 — Memberships & Packages
+│   │   ├── api/
+│   │   ├── components/           # PackageForm, PackageList, BenefitManager
+│   │   ├── pages/
+│   │   ├── schemas/
+│   │   └── types/
+│   │
+│   ├── trainers/                 # BRD §4 — Trainer Management
+│   │   ├── api/
+│   │   ├── components/           # TrainerForm, TrainerList, ScheduleCalendar,
+│   │   │                         # AssignMemberDialog
+│   │   ├── pages/
+│   │   ├── schemas/
+│   │   └── types/
+│   │
+│   ├── payments/                 # BRD §5 — Payment Management
+│   │   ├── api/
+│   │   ├── components/           # PaymentRecorder, InvoiceView, RefundDialog,
+│   │   │                         # RevenueChart
+│   │   ├── pages/
+│   │   ├── schemas/
+│   │   └── types/
+│   │
+│   ├── attendance/               # BRD — Attendance Management
+│   │   ├── api/
+│   │   ├── components/           # CheckInForm, AttendanceLog, AttendanceChart
+│   │   ├── pages/
+│   │   └── types/
+│   │
+│   ├── dashboard/                # BRD §6 — Owner Dashboard
+│   │   ├── api/
+│   │   ├── components/           # DashboardWidgets, RevenueChart,
+│   │   │                         # MembershipDistribution, TrainerPerformance
+│   │   ├── pages/                # DashboardPage
+│   │   └── types/
+│   │
+│   └── reports/                  # BRD §6.3–6.5 — Reports & Exports
+│       ├── api/
+│       ├── components/           # ReportFilters, ReportTable, ExportControls
+│       ├── pages/                # ReportsPage
+│       └── types/
+│
+└── styles/
+    ├── globals.css               # Tailwind directives, base resets
+    ├── tokens.css                # CSS custom properties (design tokens)
+    └── themes/                   # Preset theme overrides
+        ├── light.css             # Light mode token values
+        ├── dark.css              # Dark mode token values
+        └── gym-branded.css       # Example custom gym brand theme
+```
+
+---
+
+## 3. Centralized Theme System
+
+The theme is managed **entirely via CSS custom properties (design tokens)**. Every component, every Shadcn/ui primitive, and Tailwind utilities all resolve to these tokens — so changing one token set instantly re-themes the whole app.
+
+### 3.1 Architecture Overview
+
+```mermaid
+graph LR
+    A["tokens.css<br/>(CSS Custom Properties)"] --> B["Tailwind Config<br/>maps utilities → tokens"]
+    A --> C["Shadcn/ui Components<br/>consume tokens directly"]
+    A --> D["Custom Components<br/>use var(--token-name)"]
+    E["ThemeProvider"] -->|"sets data-theme attr<br/>on document root"| A
+    F["Zustand Theme Store"] -->|"selected theme + overrides"| E
+    G["Theme Switcher UI"] --> F
+```
+
+### 3.2 Design Token Categories
+
+All visual decisions are expressed as tokens in `styles/tokens.css`:
+
+| Category | Token Examples | What They Control |
+|---|---|---|
+| **Colors** | `--color-primary`, `--color-primary-foreground`, `--color-destructive` | Brand colors, semantic colors |
+| **Surfaces** | `--color-background`, `--color-card`, `--color-popover`, `--color-muted` | Backgrounds, cards, panels |
+| **Borders** | `--color-border`, `--color-ring`, `--radius-sm/md/lg` | Borders, focus rings, rounding |
+| **Typography** | `--font-sans`, `--font-mono`, `--font-size-*`, `--font-weight-*` | Font families, sizes, weights |
+| **Spacing** | `--spacing-*` | Consistent spacing scale |
+| **Shadows** | `--shadow-sm/md/lg` | Elevation levels |
+| **Charts** | `--chart-1` through `--chart-5` | Dashboard chart palette |
+
+### 3.3 Theme Presets
+
+Each preset is a CSS file that overrides the tokens on `[data-theme="<name>"]`:
+
+```css
+/* styles/tokens.css — defaults (light) */
+:root {
+  --color-primary: 220 90% 56%;
+  --color-background: 0 0% 100%;
+  --color-card: 0 0% 100%;
+  --radius-md: 0.5rem;
+  --font-sans: 'Inter', sans-serif;
+  /* ... full token set */
+}
+
+/* styles/themes/dark.css */
+[data-theme="dark"] {
+  --color-primary: 220 90% 64%;
+  --color-background: 224 10% 10%;
+  --color-card: 224 10% 13%;
+  /* only override what changes */
+}
+```
+
+### 3.4 ThemeProvider & Store
+
+```ts
+// core/theme/theme-store.ts
+interface ThemeState {
+  activeTheme: 'light' | 'dark' | 'system' | string; // string = custom gym theme
+  overrides: Partial<ThemeTokens>;                    // runtime token overrides
+  setTheme: (theme: string) => void;
+  setTokenOverride: (token: string, value: string) => void;
+  resetOverrides: () => void;
+}
+```
+
+```tsx
+// core/theme/theme-provider.tsx
+// Wraps the app in <App /> via providers.tsx
+// - Reads activeTheme from store
+// - Sets `data-theme` attribute on <html>
+// - Applies any runtime overrides as inline CSS vars on :root
+// - Listens to system `prefers-color-scheme` when set to 'system'
+```
+
+### 3.5 How Components Consume Tokens
+
+Every component uses tokens — **never hard-coded colors**:
+
+```tsx
+// Tailwind utilities map to tokens via tailwind.config.ts
+<div className="bg-background text-foreground border-border rounded-md shadow-md">
+
+// Direct CSS when needed
+<div style={{ color: 'hsl(var(--color-primary))' }}>
+
+// Shadcn/ui components already use tokens internally — no changes needed
+<Button variant="default">Save</Button>  // uses --color-primary automatically
+```
+
+### 3.6 Theme Switcher Component
+
+A dropdown in the app header lets users switch themes at runtime:
+
+```
+┌──────────────────────────┐
+│  🎨 Theme               │
+│  ○ Light                 │
+│  ● Dark                  │
+│  ○ System                │
+│  ──────────────────────  │
+│  ○ Gym Brand (custom)    │
+└──────────────────────────┘
+```
+
+The selection is persisted to `localStorage` and restored on load.
+
+### 3.7 Gym-Branded Themes (Future)
+
+Gym owners will be able to set brand colors in **Settings → Appearance**, which creates runtime token overrides stored in the database. This allows each gym to white-label the UI with zero code changes.
+
+---
+
+## 4. Multi-Tenancy Strategy (Frontend)
+
+The BRD mandates strict data isolation per gym. The frontend enforces this:
+
+```
+┌─────────────────────────────────────────────┐
+│              Axios Interceptor               │
+│  ┌─────────────────────────────────────────┐ │
+│  │ Every request automatically injects:    │ │
+│  │  • Authorization: Bearer <jwt>          │ │
+│  │  • X-Tenant-Id: <gymId from auth store> │ │
+│  └─────────────────────────────────────────┘ │
+└─────────────────────────────────────────────┘
+```
+
+- **JWT token** contains `tenantId`, `role`, and `branchId`
+- **Zustand auth store** exposes `currentTenant` and `currentBranch`
+- **Axios interceptor** attaches `X-Tenant-Id` header to every API call
+- **Super Admin** can switch tenants via a gym selector in the header
+- **TanStack Query keys** include `tenantId` to prevent cache cross-contamination
+
+---
+
+## 5. Role-Based Access Control (RBAC)
+
+### 4.1 Route-Level Guards
+
+```tsx
+// Usage in router.tsx
+<Route element={<RoleGuard allowed={["Owner", "Receptionist"]} />}>
+  <Route path="members" element={<MembersListPage />} />
+</Route>
+```
+
+### 4.2 Permission Matrix
+
+| Feature | Super Admin | Owner | Receptionist | Trainer | Member |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Dashboard (full) | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Manage Gyms | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Member CRUD | ✅ | ✅ | ✅ | ❌ | ❌ |
+| View Own Profile | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Membership Packages | ✅ | ✅ | View | ❌ | View |
+| Payments | ✅ | ✅ | ✅ | ❌ | View Own |
+| Trainer Management | ✅ | ✅ | View | ❌ | ❌ |
+| Trainer Schedule | ✅ | ✅ | View | Own | ❌ |
+| Attendance Check-in | ✅ | ✅ | ✅ | ✅ | Self |
+| Reports & Export | ✅ | ✅ | Limited | ❌ | ❌ |
+
+### 4.3 Sidebar Navigation
+
+The sidebar renders **different menu items per role**, driven by a config:
+```ts
+const NAV_CONFIG = [
+  { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["SuperAdmin", "Owner"] },
+  { label: "Members",   path: "/members",   icon: Users,           roles: ["SuperAdmin", "Owner", "Receptionist"] },
+  // ...
+];
+```
+
+---
+
+## 6. Routing Architecture
+
+```
+/                           → Redirect based on role
+/register                   → Gym registration (public)
+/login                      → Login page (public)
+/setup-wizard               → Post-registration setup (Owner only)
+  /setup-wizard/profile
+  /setup-wizard/plans
+  /setup-wizard/staff
+  /setup-wizard/payments
+
+/dashboard                  → Owner Dashboard
+/members                    → Member list
+/members/new                → Add member
+/members/:id                → Member detail / profile
+/members/:id/renew          → Membership renewal
+
+/memberships                → Package list
+/memberships/new            → Create package
+/memberships/:id/edit       → Edit package
+
+/trainers                   → Trainer list
+/trainers/new               → Add trainer
+/trainers/:id               → Trainer profile & schedule
+/trainers/:id/schedule      → Schedule management
+
+/payments                   → Payment list / financial dashboard
+/payments/:id/invoice       → Invoice view
+
+/attendance                 → Attendance log
+/attendance/check-in        → Check-in page
+
+/reports                    → Reports hub
+/reports/:type              → Specific report (revenue, membership, trainer, etc.)
+
+/settings                   → Gym settings, branches, staff
+/admin/gyms                 → Super Admin gym management
+```
+
+All routes under `/` (except `/register`, `/login`) are wrapped in `<AuthGuard>` and `<AppLayout>`.
+
+---
+
+## 7. State Management Strategy
+
+```mermaid
+graph TD
+    A["Zustand Store"] -->|"Auth, UI theme, sidebar state"| B["Client-only state"]
+    C["TanStack Query"] -->|"Members, packages, payments..."| D["Server state cache"]
+    E["React Hook Form"] -->|"Form fields, validation"| F["Form state"]
+    D -->|"Optimistic updates"| C
+    C -->|"Auto refetch, pagination"| D
+```
+
+| State Type | Tool | Examples |
+|---|---|---|
+| **Auth / Session** | Zustand | Current user, tenant, role, token |
+| **Theme** | Zustand + CSS Vars | Active theme preset, runtime token overrides |
+| **UI State** | Zustand | Sidebar collapsed, active branch |
+| **Server Data** | TanStack Query | Members list, packages, dashboard stats |
+| **Form Data** | React Hook Form | Registration form, payment form |
+
+---
+
+## 8. API Layer Design
+
+Each feature module has an `api/` folder with **custom hooks** that wrap TanStack Query:
+
+```ts
+// features/members/api/use-members.ts
+export function useMembers(filters: MemberFilters) {
+  return useQuery({
+    queryKey: ["members", tenantId, filters],
+    queryFn: () => api.get("/members", { params: filters }),
+  });
+}
+
+export function useCreateMember() {
+  return useMutation({
+    mutationFn: (data: CreateMemberDto) => api.post("/members", data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["members"] }),
+  });
+}
+```
+
+---
+
+## 9. Key UI Patterns
+
+### 8.1 Dashboard Widgets
+Reusable `<StatCard>` component with icon, label, value, and trend indicator. Dashboard page composes 6 widgets matching BRD §6.1.
+
+### 8.2 Data Tables
+All list pages (members, trainers, payments, packages) use a shared `<DataTable>` component built on TanStack Table with:
+- Server-side pagination
+- Column sorting
+- Global & column filters
+- Row actions menu
+- Bulk selection (future)
+
+### 8.3 Setup Wizard
+Multi-step wizard using a stepper component with 4 stages (Profile → Plans → Staff → Payment Settings). Progress is persisted to the backend after each step.
+
+### 8.4 Report Export
+`<ExportButton>` component that accepts table data and exports to:
+- **PDF** via jsPDF + autoTable
+- **Excel** via SheetJS
+
+### 8.5 Notifications System
+In-app notification bell with a dropdown, powered by polling or WebSocket (future). Toast notifications for real-time feedback on actions.
+
+---
+
+## 10. Performance Strategy
+
+| Technique | Implementation |
+|---|---|
+| **Code Splitting** | `React.lazy()` + `Suspense` per feature route |
+| **Query Caching** | TanStack Query with stale times tuned per entity |
+| **Virtualization** | `@tanstack/react-virtual` for large member/payment lists |
+| **Image Optimization** | Lazy load profile photos, compress on upload |
+| **Bundle Analysis** | `rollup-plugin-visualizer` in Vite config |
+
+---
+
+## 11. Future-Proofing
+
+| Future BRD Item | Architecture Support |
+|---|---|
+| Mobile App | API hooks in `features/*/api/` are framework-agnostic — reusable in React Native |
+| Payment Gateway | `payments/` feature already modular; add gateway adapter in `core/api/` |
+| SMS Reminders | Backend concern; frontend adds notification preferences UI in settings |
+| Workout Tracking | Add new `features/workouts/` module — zero impact on existing modules |
+| SaaS Billing | Add `features/billing/` module for subscription management |
+
+---
+
+## 12. Verification Plan
+
+Since this is an architecture proposal (no code yet), verification will happen during implementation:
+
+### Automated Tests
+- **Unit Tests**: Vitest for utility functions, custom hooks, and Zod schemas
+- **Component Tests**: React Testing Library for form components and data tables
+- **E2E Tests**: Playwright for critical flows (login → dashboard, member CRUD, payment recording)
+- Run with: `npm run test` (Vitest) and `npx playwright test` (E2E)
+
+### Manual Verification
+- After scaffolding, verify the dev server starts: `npm run dev`
+- Verify route navigation and lazy loading in browser DevTools Network tab
+- Verify role-based sidebar rendering by mocking different user roles
+
+---
+
+> [!IMPORTANT]
+> This is an architecture-only proposal. No code changes are being made yet. Once you approve this architecture, I'll scaffold the project and begin implementation.
