@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-table';
 import { CalendarRange, Edit2, Trash2, User, MoreVertical, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { deleteToastClassNames } from '@/lib/toast-styles';
 import { trainersApi } from '../api/trainers-api';
 import type { Trainer } from '../types';
 import { Button } from '@/components/ui/Button';
@@ -16,9 +17,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface TrainersTableProps {
     onEdit: (trainer: Trainer) => void;
     onViewSchedule: (trainer: Trainer) => void;
+    onRowClick: (trainer: Trainer) => void;
 }
 
-export function TrainersTable({ onEdit, onViewSchedule }: TrainersTableProps) {
+export function TrainersTable({ onEdit, onViewSchedule, onRowClick }: TrainersTableProps) {
     const queryClient = useQueryClient();
     const { data: trainers, isLoading, isError } = useQuery({
         queryKey: ['trainers'],
@@ -41,17 +43,18 @@ export function TrainersTable({ onEdit, onViewSchedule }: TrainersTableProps) {
     });
 
     const handleDelete = (trainer: Trainer) => {
-        toast.error(`OFFBOARD OPERATIVE: ${trainer.firstName} ${trainer.lastName}?`, {
-            description: "Terminating system access and historical logs.",
+        toast(`Remove ${trainer.firstName} ${trainer.lastName}?`, {
+            description: 'This will permanently delete their record and all session data.',
+            duration: 8000,
+            classNames: deleteToastClassNames,
             action: {
-                label: 'EXECUTE',
+                label: 'Delete',
                 onClick: () => deleteMutation.mutate(trainer.id),
             },
             cancel: {
-                label: 'ABORT',
+                label: 'Cancel',
                 onClick: () => { },
             },
-            duration: Infinity,
         });
     };
 
@@ -195,7 +198,6 @@ export function TrainersTable({ onEdit, onViewSchedule }: TrainersTableProps) {
                 <p className="text-[var(--text-secondary)] mt-4 max-w-md mx-auto font-bold text-base leading-relaxed">
                     Facility personnel roster is empty. Your core requires leadership to maintain peak output.
                 </p>
-                <Button className="mt-10 px-12 h-16 text-lg font-black bg-[var(--primary)] shadow-2xl shadow-red-950/40">RECRUIT LEAD OPERATIVE</Button>
             </div>
         );
     }
@@ -222,7 +224,8 @@ export function TrainersTable({ onEdit, onViewSchedule }: TrainersTableProps) {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.03 }}
                                 key={row.id}
-                                className="hover:bg-[var(--surface-alt)]/40 transition-all group cursor-default"
+                                onClick={() => onRowClick(row.original)}
+                                className="hover:bg-[var(--surface-alt)]/40 transition-all group cursor-pointer"
                             >
                                 {row.getVisibleCells().map((cell) => (
                                     <td key={cell.id} className="px-8 py-5 whitespace-nowrap">

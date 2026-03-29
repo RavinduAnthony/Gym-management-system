@@ -4,6 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { X, Calendar as CalendarIcon, Clock, MapPin, Trash2, CalendarPlus } from 'lucide-react';
 import { toast } from 'sonner';
+import { CustomSelect } from '@/components/ui/CustomSelect';
+import { CustomDateInput } from '@/components/ui/CustomDateInput';
+import { CustomTimeInput } from '@/components/ui/CustomTimeInput';
 
 import { trainerScheduleSchema } from '../schemas/trainer-schema';
 import { trainersApi } from '../api/trainers-api';
@@ -33,6 +36,7 @@ export function TrainerScheduleDialog({ isOpen, onClose, trainer }: Props) {
         register,
         handleSubmit,
         reset,
+        watch,
         formState: { errors },
     } = useForm<TrainerScheduleFormData>({
         resolver: zodResolver(trainerScheduleSchema) as any,
@@ -127,10 +131,9 @@ export function TrainerScheduleDialog({ isOpen, onClose, trainer }: Props) {
                             <form id="schedule-form" onSubmit={handleSubmit(onSubmit as any)} className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-foreground mb-1.5">Date *</label>
-                                    <input
-                                        type="date"
+                                    <CustomDateInput
                                         {...register('date')}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                                        value={watch('date')}
                                     />
                                     {errors.date && <p className="mt-1 text-xs text-destructive">{errors.date.message}</p>}
                                 </div>
@@ -138,19 +141,17 @@ export function TrainerScheduleDialog({ isOpen, onClose, trainer }: Props) {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-foreground mb-1.5">Start Time *</label>
-                                        <input
-                                            type="time"
+                                        <CustomTimeInput
                                             {...register('startTime')}
-                                            className="w-full px-3 py-2 bg-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                                            value={watch('startTime')}
                                         />
                                         {errors.startTime && <p className="mt-1 text-xs text-destructive">{errors.startTime.message}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-foreground mb-1.5">End Time *</label>
-                                        <input
-                                            type="time"
+                                        <CustomTimeInput
                                             {...register('endTime')}
-                                            className="w-full px-3 py-2 bg-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                                            value={watch('endTime')}
                                         />
                                         {errors.endTime && <p className="mt-1 text-xs text-destructive">{errors.endTime.message}</p>}
                                     </div>
@@ -159,26 +160,24 @@ export function TrainerScheduleDialog({ isOpen, onClose, trainer }: Props) {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-foreground mb-1.5">Session Type</label>
-                                        <select
+                                        <CustomSelect
                                             {...register('sessionType')}
-                                            className="w-full px-3 py-2 bg-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
-                                        >
-                                            <option value="One-on-One">1-on-1 PT</option>
-                                            <option value="Group">Group Class</option>
-                                        </select>
+                                            value={watch('sessionType')}
+                                            options={[
+                                                { value: 'One-on-One', label: '1-on-1 PT' },
+                                                { value: 'Group', label: 'Group Class' },
+                                            ]}
+                                        />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-foreground mb-1.5">Branch</label>
-                                        <select
+                                        <CustomSelect
                                             {...register('branchId')}
-                                            className="w-full px-3 py-2 bg-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                                            value={watch('branchId')}
+                                            placeholder={branchesLoading ? 'Loading branches...' : (branches?.length === 0 ? 'No branches available' : 'Select a branch')}
                                             disabled={branchesLoading}
-                                        >
-                                            <option value="">{branchesLoading ? 'Loading branches...' : (branches?.length === 0 ? 'No branches available' : 'Select a branch')}</option>
-                                            {branches?.map((b) => (
-                                                <option key={b.id} value={b.id}>{b.name}</option>
-                                            ))}
-                                        </select>
+                                            options={branches?.map(b => ({ value: b.id, label: b.name })) ?? []}
+                                        />
                                     </div>
                                 </div>
 

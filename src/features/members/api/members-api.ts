@@ -1,149 +1,192 @@
-import type { Member, MemberFormData, PaymentRecord } from '../types';
+import { api } from '@/core/api/axios-instance';
+import type { Member, MemberRecord, MembershipRecord, MemberFormData, PaymentRecord } from '../types';
 
-let members: Member[] = [
-    {
-        id: 'mem_1',
-        firstName: 'John',
-        lastName: 'Doe',
-        phone: '0712345678',
-        gender: 'Male',
-        dateOfBirth: '1990-05-15',
-        joinDate: '2025-01-10',
-        branchId: 'Colombo Main',
-        status: 'Active',
-        email: 'john.doe@example.com',
-        emergencyContact: 'Jane Doe - 0777654321',
-        membershipPlanId: 'pkg_1', // Assume this maps to a plan
-        membershipStartDate: '2026-02-10',
-        membershipEndDate: '2026-03-10',
-        paymentStatus: 'Paid',
-        trainerId: 'trn_1',
-        createdAt: '2025-01-10T00:00:00Z',
-    },
-    {
-        id: 'mem_2',
-        firstName: 'Emma',
-        lastName: 'Watson',
-        phone: '0759876543',
-        gender: 'Female',
-        dateOfBirth: '1995-08-22',
-        joinDate: '2025-11-05',
-        branchId: 'Kandy Branch',
-        status: 'Inactive',
-        email: 'emma.w@example.com',
-        membershipPlanId: 'pkg_2',
-        membershipStartDate: '2025-11-05',
-        membershipEndDate: '2026-02-05',
-        paymentStatus: 'Pending',
-        createdAt: '2025-11-05T00:00:00Z',
-    }
-];
+// Map full form data to the backend CreateMemberDto (no membership fields)
+const mapMemberToBackendDto = (data: Partial<MemberFormData>) => {
+    return {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
+        gender: data.gender,
+        dateOfBirth: data.dateOfBirth || null,
+        joinDate: data.joinDate || null,
+        branchId: data.branchId || null,
+        email: data.email || null,
+        emergencyContact: data.emergencyContact || null,
+        address: data.address || null,
+        height: data.height || null,
+        weight: data.weight || null,
+        medicalConditions: data.medicalConditions || null,
+        trainerId: data.trainerId || null,
+    };
+};
 
-let payments: PaymentRecord[] = [
-    {
-        id: 'py_1',
-        memberId: 'mem_1',
-        date: '2026-02-10',
-        planName: 'Monthly',
-        amount: 5000,
-    },
-    {
-        id: 'py_2',
-        memberId: 'mem_1',
-        date: '2026-01-10',
-        planName: 'Monthly',
-        amount: 5000,
-    }
-];
+// Map full form data to the backend CreateMembershipDto
+const mapMembershipToBackendDto = (memberId: string, data: MemberFormData, price: number) => {
+    return {
+        memberId,
+        packageId: data.membershipPlanId,
+        startDate: data.membershipStartDate,
+        endDate: data.membershipEndDate,
+        price,
+        discount: 0,
+        paymentStatus: data.paymentStatus,
+        registrationFee: data.registrationFee ?? 0,
+    };
+};
+
+// Merge a MemberRecord with its latest MembershipRecord into the combined Member type
+const mergeWithMembership = (member: MemberRecord, membership?: MembershipRecord | null): Member => ({
+    ...member,
+    membershipId: membership?.id,
+    membershipPlanId: membership?.packageId,
+    membershipStartDate: membership?.startDate,
+    membershipEndDate: membership?.endDate,
+    paymentStatus: membership?.paymentStatus,
+});
 
 export const membersApi = {
     getMembers: async (): Promise<Member[]> => {
-        return new Promise((resolve) => setTimeout(() => resolve([...members]), 600));
+        const membersRes = await api.get<{ data: MemberRecord[] }>('/member');
+        const members = membersRes.data.data;
+
+        // Fetch all memberships per member and attach the most recent one
+        const enriched = await Promise.all(
+            members.map(async (m) => {
+                try {
+                    const msRes = await api.get<{ data: MembershipRecord[] }>(`/membership/member/${m.id}`);
+                    const list = msRes.data.data ?? [];
+                    // Pick the most recent (latest startDate)
+                    const latest = list.sort((a, b) =>
+                        new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+                    )[0] ?? null;
+                    return mergeWithMembership(m, latest);
+                } catch {
+                    return mergeWithMembership(m, null);
+                }
+            })
+        );
+        return enriched;
     },
 
     getMemberById: async (id: string): Promise<Member | undefined> => {
-        return new Promise((resolve) => setTimeout(() => resolve(members.find(m => m.id === id)), 400));
+        const memberRes = await api.get<{ data: MemberRecord }>(`/member/${id}`);
+        const member = memberRes.data.data;
+        try {
+            const msRes = await api.get<{ data: MembershipRecord[] }>(`/membership/member/${id}`);
+            const list = msRes.data.data ?? [];
+            const latest = list.sort((a, b) =>
+                new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+            )[0] ?? null;
+            return mergeWithMembership(member, latest);
+        } catch {
+            return mergeWithMembership(member, null);
+        }
     },
 
-    createMember: async (data: MemberFormData): Promise<Member> => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const newMember: Member = {
-                    ...data,
-                    id: `mem_${Date.now()}`,
-                    createdAt: new Date().toISOString(),
-                };
-                members = [newMember, ...members];
+    createMember: async (data: MemberFormData & { _price?: number }): Promise<Member> => {
+        // 1. Create the member record
+        const memberPayload = mapMemberToBackendDto(data);
+        const memberRes = await api.post<{ data: MemberRecord }>('/member', memberPayload);
+        const member = memberRes.data.data;
 
-                // Add initial payment if marked as paid
-                if (data.paymentStatus === 'Paid') {
-                    payments = [{
-                        id: `py_${Date.now()}`,
-                        memberId: newMember.id,
-                        date: new Date().toISOString().split('T')[0],
-                        planName: 'Initial Plan',
-                        amount: 0, // In real app, we'd look up the plan price
-                    }, ...payments];
-                }
+        // 2. Create the membership record
+        const price = data._price ?? 0;
+        const membershipPayload = mapMembershipToBackendDto(member.id, data, price);
+        const msRes = await api.post<{ data: MembershipRecord }>('/membership', membershipPayload);
+        const membership = msRes.data.data;
 
-                resolve(newMember);
-            }, 800);
-        });
+        return mergeWithMembership(member, membership);
     },
 
-    updateMember: async (id: string, data: Partial<MemberFormData>): Promise<Member> => {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                const index = members.findIndex((m) => m.id === id);
-                if (index === -1) return reject(new Error('Member not found'));
+    updateMember: async (id: string, data: Partial<MemberFormData> & { _price?: number }, membershipId?: string): Promise<Member> => {
+        // 1. Update the member record
+        const memberPayload = { ...mapMemberToBackendDto(data), status: (data as any).status };
+        const memberRes = await api.put<{ data: MemberRecord }>(`/member/${id}`, memberPayload);
+        const member = memberRes.data.data;
 
-                members[index] = { ...members[index], ...data };
-                resolve(members[index]);
-            }, 600);
-        });
+        // 2. Update or create the membership record
+        let membership: MembershipRecord | null = null;
+        const price = data._price ?? 0;
+        if (membershipId && data.membershipPlanId && data.membershipStartDate && data.membershipEndDate) {
+            const msPayload = {
+                packageId: data.membershipPlanId,
+                startDate: data.membershipStartDate,
+                endDate: data.membershipEndDate,
+                price,
+                discount: 0,
+                paymentStatus: data.paymentStatus ?? 'Pending',
+            };
+            const msRes = await api.put<{ data: MembershipRecord }>(`/membership/${membershipId}`, msPayload);
+            membership = msRes.data.data;
+        } else if (!membershipId && data.membershipPlanId && data.membershipStartDate && data.membershipEndDate) {
+            // No existing membership — create one
+            const membershipPayload = mapMembershipToBackendDto(id, data as MemberFormData, price);
+            const msRes = await api.post<{ data: MembershipRecord }>('/membership', membershipPayload);
+            membership = msRes.data.data;
+        }
+
+        return mergeWithMembership(member, membership);
     },
 
     deleteMember: async (id: string): Promise<void> => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                members = members.filter((m) => m.id !== id);
-                payments = payments.filter((p) => p.memberId !== id);
-                resolve();
-            }, 600);
-        });
+        await api.delete(`/member/${id}`);
+    },
+
+
+    deactivateMember: async (id: string): Promise<void> => {
+        await api.post(`/member/${id}/deactivate`);
+    },
+
+    reactivateMember: async (id: string): Promise<void> => {
+        await api.post(`/member/${id}/reactivate`);
+    },
+
+    getInactiveMembers: async (): Promise<Member[]> => {
+        const membersRes = await api.get<{ data: MemberRecord[] }>('/member/inactive');
+        const members = membersRes.data.data ?? [];
+        const enriched = await Promise.all(
+            members.map(async (m) => {
+                try {
+                    const msRes = await api.get<{ data: MembershipRecord[] }>(`/membership/member/${m.id}`);
+                    const list = msRes.data.data ?? [];
+                    const latest = list.sort((a, b) =>
+                        new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+                    )[0] ?? null;
+                    return mergeWithMembership(m, latest);
+                } catch {
+                    return mergeWithMembership(m, null);
+                }
+            })
+        );
+        return enriched;
+    },
+    getMembershipsByMember: async (memberId: string): Promise<MembershipRecord[]> => {
+        try {
+            const response = await api.get<{ data: MembershipRecord[] }>(`/membership/member/${memberId}`);
+            return response.data.data ?? [];
+        } catch {
+            return [];
+        }
     },
 
     getPaymentsByMember: async (memberId: string): Promise<PaymentRecord[]> => {
-        return new Promise((resolve) => {
-            setTimeout(() => resolve(payments.filter(p => p.memberId === memberId)), 400);
-        });
+        try {
+            const response = await api.get<{ data: PaymentRecord[] }>(`/membership/payments/${memberId}`);
+            return response.data.data ?? [];
+        } catch {
+            return [];
+        }
     },
 
-    renewMembership: async (memberId: string, planName: string, amount: number, endDate: string): Promise<void> => {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                const index = members.findIndex((m) => m.id === memberId);
-                if (index === -1) return reject(new Error('Member not found'));
-
-                // Update member
-                members[index] = {
-                    ...members[index],
-                    membershipEndDate: endDate,
-                    paymentStatus: 'Paid',
-                    status: 'Active'
-                };
-
-                // Record payment
-                payments = [{
-                    id: `py_${Date.now()}`,
-                    memberId,
-                    date: new Date().toISOString().split('T')[0],
-                    planName,
-                    amount,
-                }, ...payments];
-
-                resolve();
-            }, 800);
+    renewMembership: async (membershipId: string, _packageId: string, planName: string, amount: number, endDate: string): Promise<void> => {
+        await api.post('/membership/renew', {
+            membershipId,
+            newEndDate: endDate,
+            planName,
+            amount,
+            discount: 0,
         });
-    }
+    },
 };
+

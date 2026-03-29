@@ -13,7 +13,7 @@ const mapToBackendDto = (data: Partial<MembershipPackageFormData>) => {
         TrainerIncluded: data.trainerIncluded,
         FreezeDays: data.freezeDays || null,
         DiscountAllowed: data.discountAllowed,
-        // Backend currently doesn't persist benefits array, but we can pass it if it existed.
+        BillingFrequency: data.billingFrequency ?? 'Monthly',
     };
 };
 
@@ -30,6 +30,7 @@ const mapToFrontendPackage = (data: any): MembershipPackage => {
         trainerIncluded: data.trainerIncluded,
         freezeDays: data.freezeDays,
         discountAllowed: data.discountAllowed,
+        billingFrequency: data.billingFrequency ?? 'Monthly',
         benefits: [], // Backend doesn't return this yet
         createdAt: data.createdAt,
     };

@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-table';
 import { Edit2, Trash2, Package, Clock, Shield, Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import { deleteToastClassNames } from '@/lib/toast-styles';
 import { membershipsApi } from '../api/memberships-api';
 import type { MembershipPackage } from '../types';
 import { Button } from '@/components/ui/Button';
@@ -15,9 +16,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface Props {
     onEdit: (pkg: MembershipPackage) => void;
+    onRowClick: (pkg: MembershipPackage) => void;
 }
 
-export function MembershipsTable({ onEdit }: Props) {
+export function MembershipsTable({ onEdit, onRowClick }: Props) {
     const queryClient = useQueryClient();
 
     const { data: packages, isLoading, isError } = useQuery({
@@ -41,15 +43,16 @@ export function MembershipsTable({ onEdit }: Props) {
     });
 
     const handleDelete = (pkg: MembershipPackage) => {
-        toast.error(`DECOMMISSION TIER: "${pkg.name}"?`, {
-            description: 'This will terminate the availability of this operational package.',
-            duration: Infinity,
+        toast(`Remove "${pkg.name}"?`, {
+            description: 'This will permanently delete this package and make it unavailable for new memberships.',
+            duration: 8000,
+            classNames: deleteToastClassNames,
             action: {
-                label: 'EXECUTE',
+                label: 'Delete',
                 onClick: () => deleteMutation.mutate(pkg.id),
             },
             cancel: {
-                label: 'ABORT',
+                label: 'Cancel',
                 onClick: () => { },
             },
         });
@@ -188,7 +191,6 @@ export function MembershipsTable({ onEdit }: Props) {
                 <p className="text-[var(--text-secondary)] mt-4 max-w-md mx-auto font-bold text-base leading-relaxed">
                     No membership packages registered. Operation requires a defined economic architecture.
                 </p>
-                <Button className="mt-10 px-12 h-16 text-lg font-black bg-[var(--primary)] shadow-2xl shadow-red-950/40">ARCHITECT FIRST PACKAGE</Button>
             </div>
         );
     }
@@ -215,7 +217,8 @@ export function MembershipsTable({ onEdit }: Props) {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.03 }}
                                 key={row.id}
-                                className="hover:bg-[var(--surface-alt)]/40 transition-all group cursor-default"
+                                onClick={() => onRowClick(row.original)}
+                                className="hover:bg-[var(--surface-alt)]/40 transition-all group cursor-pointer"
                             >
                                 {row.getVisibleCells().map((cell) => (
                                     <td key={cell.id} className="px-8 py-5 whitespace-nowrap">

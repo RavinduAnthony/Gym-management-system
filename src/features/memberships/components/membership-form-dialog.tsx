@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 import { membershipPackageSchema } from '../schemas/membership-schema';
 import { membershipsApi } from '../api/memberships-api';
@@ -40,6 +41,7 @@ export function MembershipFormDialog({ isOpen, onClose, initialData }: Props) {
             trainerIncluded: false,
             freezeDays: 0,
             discountAllowed: false,
+            billingFrequency: 'Monthly',
             benefits: [],
         },
     });
@@ -145,33 +147,70 @@ export function MembershipFormDialog({ isOpen, onClose, initialData }: Props) {
                                         className="w-full px-3 py-2 bg-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
                                     />
                                     {errors.price && <p className="mt-1 text-xs text-destructive">{errors.price.message}</p>}
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        {watch('billingFrequency') === 'FullPayment' ? 'One-time full package price.' : 'Amount charged each month.'}
+                                    </p>
+                                </div>
+
+                                {/* Billing Frequency */}
+                                <div className="sm:col-span-2">
+                                    <label className="block text-sm font-medium text-foreground mb-2">Billing Mode</label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {([
+                                            { value: 'Monthly', title: 'Monthly Payments', desc: 'Member pays each month separately. Regular & Late tracking applies.' },
+                                            { value: 'FullPayment', title: 'Full Payment at Once', desc: 'Single upfront payment covering the entire package duration.' },
+                                        ] as const).map((opt) => {
+                                            const selected = watch('billingFrequency') === opt.value;
+                                            return (
+                                                <label
+                                                    key={opt.value}
+                                                    className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                                        selected
+                                                            ? 'border-primary bg-primary/5'
+                                                            : 'border-border hover:border-primary/40'
+                                                    }`}
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        value={opt.value}
+                                                        {...register('billingFrequency')}
+                                                        className="mt-0.5 accent-[var(--primary)]"
+                                                    />
+                                                    <div>
+                                                        <p className={`text-sm font-semibold ${selected ? 'text-primary' : 'text-foreground'}`}>{opt.title}</p>
+                                                        <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
+                                                    </div>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-foreground mb-1.5">Branch</label>
-                                    <select
+                                    <CustomSelect
                                         {...register('branch')}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                                        value={watch('branch')}
+                                        placeholder={branchesLoading ? 'Loading branches...' : (branches?.length === 0 ? 'No branches available' : 'Select a branch')}
                                         disabled={branchesLoading}
-                                    >
-                                        <option value="">{branchesLoading ? 'Loading branches...' : (branches?.length === 0 ? 'No branches available' : 'Select a branch')}</option>
-                                        <option value="All Branches">All Branches</option>
-                                        {branches?.map((b) => (
-                                            <option key={b.id} value={b.id}>{b.name}</option>
-                                        ))}
-                                    </select>
+                                        options={[
+                                            { value: 'All Branches', label: 'All Branches' },
+                                            ...(branches?.map(b => ({ value: b.id, label: b.name })) ?? []),
+                                        ]}
+                                    />
                                     {errors.branch && <p className="mt-1 text-xs text-destructive">{errors.branch.message}</p>}
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-foreground mb-1.5">Status</label>
-                                    <select
+                                    <CustomSelect
                                         {...register('status')}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
-                                    >
-                                        <option value="Active">Active</option>
-                                        <option value="Inactive">Inactive</option>
-                                    </select>
+                                        value={watch('status')}
+                                        options={[
+                                            { value: 'Active', label: 'Active' },
+                                            { value: 'Inactive', label: 'Inactive' },
+                                        ]}
+                                    />
                                     {errors.status && <p className="mt-1 text-xs text-destructive">{errors.status.message}</p>}
                                 </div>
                             </div>

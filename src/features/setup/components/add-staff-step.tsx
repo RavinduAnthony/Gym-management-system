@@ -1,7 +1,8 @@
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Trash2, User, Mail, ShieldAlert } from 'lucide-react';
+import { Plus, User, Mail } from 'lucide-react';
 import { staffSchema, type StaffFormData } from '../schemas/setup-schema';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 interface Props {
     onNext: (data: StaffFormData) => void;
@@ -14,6 +15,7 @@ export function AddStaffStep({ onNext, onBack, defaultValues }: Props) {
         register,
         control,
         handleSubmit,
+        watch,
         formState: { errors, isValid },
     } = useForm<StaffFormData>({
         resolver: zodResolver(staffSchema),
@@ -94,16 +96,14 @@ export function AddStaffStep({ onNext, onBack, defaultValues }: Props) {
                                 {/* Role */}
                                 <div>
                                     <label className="block text-xs font-medium text-muted-foreground mb-1.5">Role</label>
-                                    <div className="relative">
-                                        <ShieldAlert className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                                        <select
-                                            {...register(`staff.${index}.role`)}
-                                            className="w-full pl-9 pr-3 py-2 bg-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-shadow text-sm appearance-none cursor-pointer"
-                                        >
-                                            <option value="Receptionist">Receptionist</option>
-                                            <option value="Trainer">Trainer</option>
-                                        </select>
-                                    </div>
+                                    <CustomSelect
+                                        {...register(`staff.${index}.role`)}
+                                        value={(watch('staff') as any)?.[index]?.role ?? 'Receptionist'}
+                                        options={[
+                                            { value: 'Receptionist', label: 'Receptionist' },
+                                            { value: 'Trainer', label: 'Trainer' },
+                                        ]}
+                                    />
                                 </div>
 
                                 {/* Remove Button */}

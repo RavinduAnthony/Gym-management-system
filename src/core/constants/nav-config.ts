@@ -33,7 +33,7 @@ export const NAV_CONFIG: NavItem[] = [
         roles: ['SuperAdmin', 'Owner', 'Receptionist'],
     },
     {
-        label: 'Memberships',
+        label: 'Packages',
         path: '/memberships',
         icon: Package,
         roles: ['SuperAdmin', 'Owner', 'Receptionist'],

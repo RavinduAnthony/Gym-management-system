@@ -1,9 +1,12 @@
 // src/features/trainers/pages/trainers-page.tsx
 import { useState } from 'react';
 import { Plus, UserCheck, Award, ShieldCheck } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { trainersApi } from '../api/trainers-api';
 import { TrainersTable } from '../components/trainers-table';
 import { TrainerFormDialog } from '../components/trainer-form-dialog';
 import { TrainerScheduleDialog } from '../components/trainer-schedule-dialog';
+import { TrainerDetailsDialog } from '../components/trainer-details-dialog';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { StatCounter } from '@/components/ui/StatCounter';
@@ -13,6 +16,7 @@ import { motion } from 'framer-motion';
 export function TrainersPage() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+    const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null);
 
     const handleCreateNew = () => {
@@ -30,10 +34,24 @@ export function TrainersPage() {
         setIsScheduleOpen(true);
     };
 
+    const handleRowClick = (trainer: Trainer) => {
+        setSelectedTrainer(trainer);
+        setIsDetailsOpen(true);
+    };
+
+    const { data: trainers } = useQuery({
+        queryKey: ['trainers'],
+        queryFn: trainersApi.getTrainers,
+    });
+
+    const totalTrainers = trainers?.length ?? 0;
+    const totalCertifications = trainers?.reduce((sum, t) => sum + (t.certifications?.length ?? 0), 0) ?? 0;
+    const activeTrainers = trainers?.filter(t => t.status === 'Active').length ?? 0;
+
     const stats = [
-        { label: 'Elite Coaches', value: 12, icon: <UserCheck className="w-5 h-5" />, color: 'var(--primary)', suffix: '' },
-        { label: 'Certifications', value: 45, icon: <Award className="w-5 h-5" />, color: 'var(--success)', suffix: '+' },
-        { label: 'Active Sessions', value: 28, icon: <ShieldCheck className="w-5 h-5" />, color: 'var(--info)', suffix: '' },
+        { label: 'Total Trainers', value: totalTrainers, icon: <UserCheck className="w-5 h-5" />, color: 'var(--primary)', suffix: '' },
+        { label: 'Certifications', value: totalCertifications, icon: <Award className="w-5 h-5" />, color: 'var(--success)', suffix: '' },
+        { label: 'Active', value: activeTrainers, icon: <ShieldCheck className="w-5 h-5" />, color: 'var(--info)', suffix: '' },
     ];
 
     return (
@@ -51,9 +69,9 @@ export function TrainersPage() {
                         Manage your elite staff and performance logistics.
                     </p>
                 </motion.div>
-                
-                <Button onClick={handleCreateNew} size="md" className="gap-2 shadow-2xl shadow-orange-900/20 px-8 h-14">
-                    <Plus className="w-5 h-5" /> RECRUIT TRAINER
+
+                <Button onClick={handleCreateNew} size="md" className="gap-2 shadow-2xl shadow-orange-900/20 px-10 h-14">
+                    <Plus className="w-5 h-5" /> REGISTER TRAINER
                 </Button>
             </div>
 
@@ -92,9 +110,9 @@ export function TrainersPage() {
             >
                 <Card className="p-0 overflow-hidden border-white/5 bg-[var(--surface)] shadow-2xl" hover={false}>
                     <div className="p-6 border-b border-white/5 bg-white/[0.02]">
-                         <h3 className="font-display font-black text-lg uppercase tracking-widest text-white/50">Active Registry</h3>
+                        <h3 className="font-display font-black text-lg uppercase tracking-widest text-white/50">Active Registry</h3>
                     </div>
-                    <TrainersTable onEdit={handleEdit} onViewSchedule={handleSchedule} />
+                    <TrainersTable onEdit={handleEdit} onViewSchedule={handleSchedule} onRowClick={handleRowClick} />
                 </Card>
             </motion.div>
 
@@ -107,6 +125,12 @@ export function TrainersPage() {
             <TrainerScheduleDialog
                 isOpen={isScheduleOpen}
                 onClose={() => setIsScheduleOpen(false)}
+                trainer={selectedTrainer}
+            />
+
+            <TrainerDetailsDialog
+                isOpen={isDetailsOpen}
+                onClose={() => setIsDetailsOpen(false)}
                 trainer={selectedTrainer}
             />
         </div>

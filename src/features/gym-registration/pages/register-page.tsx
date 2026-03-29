@@ -24,6 +24,7 @@ import { IronCoreLogo } from '@/components/branding/IronCoreLogo';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 export function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false);
@@ -35,6 +36,7 @@ export function RegisterPage() {
     const {
         register,
         handleSubmit,
+        watch,
         formState: { errors },
     } = useForm<GymRegistrationFormData>({
         resolver: zodResolver(gymRegistrationSchema),
@@ -229,24 +231,22 @@ export function RegisterPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-1.5">
                                 <label className="block text-sm font-medium text-[var(--text-primary)]">Country *</label>
-                                <select
+                                <CustomSelect
                                     {...register('country')}
-                                    className={`w-full px-4 py-2.5 bg-[var(--surface)] border rounded-[var(--radius-md)] text-sm focus:ring-4 focus:ring-[var(--primary-light)] focus:border-[var(--primary)] outline-none appearance-none cursor-pointer ${errors.country ? 'border-[var(--primary)]' : 'border-[var(--border)]'}`}
-                                >
-                                    <option value="">Select country</option>
-                                    {COUNTRIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                                </select>
+                                    value={watch('country')}
+                                    placeholder="Select country"
+                                    options={COUNTRIES.map(c => ({ value: c.value, label: c.label }))}
+                                />
                                 {errors.country && <p className="text-xs text-[var(--primary)] font-medium">{errors.country.message}</p>}
                             </div>
                             <div className="space-y-1.5">
                                 <label className="block text-sm font-medium text-[var(--text-primary)]">Timezone *</label>
-                                <select
+                                <CustomSelect
                                     {...register('timezone')}
-                                    className={`w-full px-4 py-2.5 bg-[var(--surface)] border rounded-[var(--radius-md)] text-sm focus:ring-4 focus:ring-[var(--primary-light)] focus:border-[var(--primary)] outline-none appearance-none cursor-pointer ${errors.timezone ? 'border-[var(--primary)]' : 'border-[var(--border)]'}`}
-                                >
-                                    <option value="">Select timezone</option>
-                                    {TIMEZONES.map((tz) => <option key={tz.value} value={tz.value}>{tz.label}</option>)}
-                                </select>
+                                    value={watch('timezone')}
+                                    placeholder="Select timezone"
+                                    options={TIMEZONES.map(tz => ({ value: tz.value, label: tz.label }))}
+                                />
                                 {errors.timezone && <p className="text-xs text-[var(--primary)] font-medium">{errors.timezone.message}</p>}
                             </div>
                         </div>

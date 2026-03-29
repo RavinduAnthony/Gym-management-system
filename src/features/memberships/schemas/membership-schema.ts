@@ -19,6 +19,9 @@ export const membershipPackageSchema = z.object({
     freezeDays: z.number().optional(),
     discountAllowed: z.boolean().default(false),
 
+    // Billing
+    billingFrequency: z.enum(['Monthly', 'FullPayment']).default('Monthly'),
+
     // Benefits
     benefits: z.array(z.string()).default([]),
 });

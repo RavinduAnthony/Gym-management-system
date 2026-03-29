@@ -23,6 +23,8 @@ import {
 } from 'recharts';
 import { motion } from 'framer-motion';
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { membersApi } from '@/features/members/api/members-api';
 
 const dummyData = [
     { name: 'Mon', revenue: 4000 },
@@ -36,9 +38,10 @@ const dummyData = [
 
 export function DashboardPage() {
     const user = useAuthStore((s) => s.user);
+    const { data: members = [] } = useQuery({ queryKey: ['members'], queryFn: membersApi.getMembers });
 
     const stats = [
-        { label: 'Total Athletes', value: 2482, icon: <Users />, trend: '+12%', color: 'var(--secondary)', suffix: '' },
+        { label: 'Total Athletes', value: members.length, icon: <Users />, trend: '+12%', color: 'var(--secondary)', suffix: '' },
         { label: 'Tactical Checks', value: 142, icon: <CalendarCheck />, trend: '+5%', color: 'var(--secondary)', suffix: '' },
         { label: 'Core Streak', value: 12, icon: <Flame />, trend: 'HOT', color: 'var(--primary)', suffix: ' Days' },
         { label: 'Capital Revenue', value: 12450, icon: <DollarSign />, trend: '+15%', color: 'var(--secondary)', prefix: '$' },

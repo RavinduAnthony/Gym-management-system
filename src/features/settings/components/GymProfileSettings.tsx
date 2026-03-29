@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { Building2, MapPin, Phone, Mail, Globe, Camera, Plus, Trash2, Map } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Building2, MapPin, Phone, Mail, Globe, Camera, Plus, Trash2, Map, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useBranches, useCreateBranch, useDeleteBranch } from '@/hooks/useBranches';
 import { toast } from 'sonner';
+import { api } from '@/core/api/axios-instance';
 
 export function GymProfileSettings() {
     const { data: branches, isLoading } = useBranches();
@@ -11,6 +12,53 @@ export function GymProfileSettings() {
 
     const [isAddingMode, setIsAddingMode] = useState(false);
     const [newBranch, setNewBranch] = useState({ name: '', address: '', phone: '' });
+    const [logoUrl, setLogoUrl] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        api.get('/uploads/logo').then(res => {
+            if (res.data?.data?.url) setLogoUrl(res.data.data.url);
+        }).catch(() => { /* no logo yet */ });
+    }, []);
+
+    const handleLogoClick = () => fileInputRef.current?.click();
+
+    const handleDeleteLogo = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsDeleting(true);
+        try {
+            await api.delete('/uploads/logo');
+            setLogoUrl(null);
+            toast.success('Logo removed successfully.');
+        } catch (err: any) {
+            const msg = err.response?.data?.message ?? 'Failed to delete logo.';
+            toast.error(msg);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            const res = await api.post('/uploads/logo', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            setLogoUrl(res.data?.data?.url ?? null);
+            toast.success('Logo updated successfully!');
+        } catch (err: any) {
+            const msg = err.response?.data?.message ?? 'Failed to upload logo.';
+            toast.error(msg);
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
 
     const handleAddBranch = () => {
         if (!newBranch.name.trim()) {
@@ -33,12 +81,36 @@ export function GymProfileSettings() {
                     <Building2 className="w-5 h-5 text-[var(--primary)]" /> Gym Identity
                 </h3>
                 <div className="flex flex-col md:flex-row gap-8 items-start">
-                    <div className="relative group cursor-pointer">
-                        <div className="w-28 h-28 rounded-2xl bg-[var(--surface-alt)] border-2 border-dashed border-[var(--border)] flex items-center justify-center group-hover:border-[var(--primary)]/50 transition-all">
-                            <Camera className="w-8 h-8 text-[var(--text-tertiary)] group-hover:text-[var(--primary)] transition-colors" />
+                    <div className="relative group cursor-pointer" onClick={!isUploading && !isDeleting ? handleLogoClick : undefined}>
+                        <div className="w-28 h-28 rounded-2xl bg-[var(--surface-alt)] border-2 border-dashed border-[var(--border)] flex items-center justify-center group-hover:border-[var(--primary)]/50 transition-all overflow-hidden">
+                            {isUploading || isDeleting ? (
+                                <Loader2 className="w-8 h-8 text-[var(--primary)] animate-spin" />
+                            ) : logoUrl ? (
+                                <img src={logoUrl} alt="Gym Logo" className="w-full h-full object-cover" />
+                            ) : (
+                                <Camera className="w-8 h-8 text-[var(--text-tertiary)] group-hover:text-[var(--primary)] transition-colors" />
+                            )}
                         </div>
-                        <span className="text-[9px] font-bold text-[var(--text-tertiary)] mt-2 block text-center uppercase tracking-widest">Upload Logo</span>
+                        {logoUrl && !isUploading && !isDeleting && (
+                            <button
+                                onClick={handleDeleteLogo}
+                                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-lg transition-colors"
+                                title="Remove logo"
+                            >
+                                <X className="w-3.5 h-3.5" />
+                            </button>
+                        )}
+                        <span className="text-[9px] font-bold text-[var(--text-tertiary)] mt-2 block text-center uppercase tracking-widest">
+                            {isDeleting ? 'Removing...' : isUploading ? 'Uploading...' : logoUrl ? 'Change Logo' : 'Upload Logo'}
+                        </span>
                     </div>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp"
+                        className="hidden"
+                        onChange={handleFileChange}
+                    />
                     <div className="flex-1 space-y-5 w-full">
                         <div>
                             <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-2 block">Gym Name</label>

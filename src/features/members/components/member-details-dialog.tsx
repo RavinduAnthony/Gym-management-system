@@ -2,9 +2,14 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, User, History, Bell, CalendarClock, CreditCard, ExternalLink, Activity, BadgeAlert } from 'lucide-react';
 import { toast } from 'sonner';
+import { CustomSelect } from '@/components/ui/CustomSelect';
+import { CustomDateInput } from '@/components/ui/CustomDateInput';
 
 import { membersApi } from '../api/members-api';
 import type { Member } from '../types';
+import { usePackages } from '@/hooks/usePackages';
+import { useBranches } from '@/hooks/useBranches';
+import { useTrainers } from '@/hooks/useTrainers';
 
 interface Props {
     isOpen: boolean;
@@ -16,9 +21,25 @@ export function MemberDetailsDialog({ isOpen, onClose, member }: Props) {
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState<'profile' | 'renewal' | 'history' | 'notifications'>('profile');
 
+    // Load real packages for the renewal dropdown + current plan name lookup
+    const { data: packages, isLoading: packagesLoading } = usePackages();
+    const { data: branches } = useBranches();
+    const { data: trainers } = useTrainers();
+
+    // Resolve display names from IDs
+    const currentPlanName = packages?.find(p => p.id === member?.membershipPlanId)?.name ?? member?.membershipPlanId ?? '—';
+    const branchName = branches?.find(b => b.id === member?.branchId)?.name ?? member?.branchId ?? '—';
+    const trainerName = (() => {
+        const t = trainers?.find(t => t.id === member?.trainerId);
+        return t ? `${t.firstName} ${t.lastName}` : 'None Assigned';
+    })();
+    const expiryDate = member?.membershipEndDate
+        ? new Date(member.membershipEndDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+        : '—';
+
     // Renewal Form State
-    const [renewPlan, setRenewPlan] = useState('Monthly Standard');
-    const [renewAmount, setRenewAmount] = useState('5000');
+    const [renewPlan, setRenewPlan] = useState('');
+    const [renewAmount, setRenewAmount] = useState('');
     const [renewEndDate, setRenewEndDate] = useState('');
 
     const { data: payments, isLoading: paymentsLoading } = useQuery({
@@ -28,7 +49,13 @@ export function MemberDetailsDialog({ isOpen, onClose, member }: Props) {
     });
 
     const renewMutation = useMutation({
-        mutationFn: () => membersApi.renewMembership(member!.id, renewPlan, parseInt(renewAmount, 10), renewEndDate),
+        mutationFn: () => membersApi.renewMembership(
+            member!.id,
+            renewPlan,
+            packages?.find(p => p.id === renewPlan)?.name ?? renewPlan,
+            parseFloat(renewAmount) || 0,
+            renewEndDate
+        ),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['members'] });
             queryClient.invalidateQueries({ queryKey: ['member-payments', member?.id] });
@@ -129,21 +156,19 @@ export function MemberDetailsDialog({ isOpen, onClose, member }: Props) {
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                     <div className="p-4 border border-border rounded-xl bg-muted/20">
                                         <p className="text-xs text-muted-foreground font-medium mb-1">Current Plan</p>
-                                        <p className="text-sm font-bold text-foreground truncate">{member.membershipPlanId}</p>
+                                        <p className="text-sm font-bold text-foreground truncate">{currentPlanName}</p>
                                     </div>
                                     <div className="p-4 border border-border rounded-xl bg-muted/20">
                                         <p className="text-xs text-muted-foreground font-medium mb-1">Expiry Date</p>
-                                        <p className="text-sm font-bold text-foreground">
-                                            {member.membershipEndDate}
-                                        </p>
+                                        <p className="text-sm font-bold text-foreground">{expiryDate}</p>
                                     </div>
                                     <div className="p-4 border border-border rounded-xl bg-muted/20">
                                         <p className="text-xs text-muted-foreground font-medium mb-1">Assigned Trainer</p>
-                                        <p className="text-sm font-bold text-foreground">{member.trainerId || 'None Assigned'}</p>
+                                        <p className="text-sm font-bold text-foreground">{trainerName}</p>
                                     </div>
                                     <div className="p-4 border border-border rounded-xl bg-muted/20">
                                         <p className="text-xs text-muted-foreground font-medium mb-1">Fitness Branch</p>
-                                        <p className="text-sm font-bold text-foreground">{member.branchId}</p>
+                                        <p className="text-sm font-bold text-foreground">{branchName}</p>
                                     </div>
                                 </div>
 
@@ -205,31 +230,34 @@ export function MemberDetailsDialog({ isOpen, onClose, member }: Props) {
                                     </div>
                                     <h3 className="text-lg font-bold text-foreground">Process Renewal</h3>
                                     <p className="text-sm text-muted-foreground mt-1">
-                                        Current plan expires on: <strong className="text-foreground">{member.membershipEndDate}</strong>
+                                        Current plan expires on: <strong className="text-foreground">{expiryDate}</strong>
                                     </p>
                                 </div>
 
                                 <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-5">
-                                    <div>
+                                <div>
                                         <label className="block text-sm font-medium text-foreground mb-1.5">New Membership Plan</label>
-                                        <select
+                                    <CustomSelect
                                             value={renewPlan}
-                                            onChange={(e) => setRenewPlan(e.target.value)}
-                                            className="w-full px-3 py-2 bg-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
-                                        >
-                                            <option value="Monthly Standard">Monthly Standard</option>
-                                            <option value="Quarterly Pro">Quarterly Pro</option>
-                                            <option value="Annual VIP">Annual VIP</option>
-                                        </select>
+                                            onChange={(e) => {
+                                                const selected = packages?.find(p => p.id === e.target.value);
+                                                setRenewPlan(e.target.value);
+                                                if (selected) setRenewAmount(String(selected.price));
+                                            }}
+                                            placeholder={packagesLoading ? 'Loading packages...' : 'Select a plan'}
+                                            disabled={packagesLoading}
+                                            options={packages?.filter(p => p.status === 'Active').map(p => ({
+                                                value: p.id,
+                                                label: `${p.name} — Rs. ${p.price.toLocaleString()} / ${p.durationInMonths} month${p.durationInMonths > 1 ? 's' : ''}`,
+                                            })) ?? []}
+                                        />
                                     </div>
 
                                     <div>
                                         <label className="block text-sm font-medium text-foreground mb-1.5">New Expiry Date</label>
-                                        <input
-                                            type="date"
+                                        <CustomDateInput
                                             value={renewEndDate}
                                             onChange={(e) => setRenewEndDate(e.target.value)}
-                                            className="w-full px-3 py-2 bg-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
                                         />
                                     </div>
 
@@ -255,7 +283,7 @@ export function MemberDetailsDialog({ isOpen, onClose, member }: Props) {
 
                                     <button
                                         onClick={() => renewMutation.mutate()}
-                                        disabled={renewMutation.isPending || !renewEndDate}
+                                        disabled={renewMutation.isPending || !renewEndDate || !renewPlan}
                                         className="w-full py-3 bg-primary text-primary-foreground rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors shadow-m disabled:opacity-50 mt-4 flex items-center justify-center gap-2"
                                     >
                                         <CreditCard className="w-4 h-4" />

@@ -20,19 +20,62 @@ export const memberSchema = z.object({
     medicalConditions: z.string().optional(),
     photo: z.string().optional(),
 
-    // Membership Info
+    // Membership Info (managed separately in Memberships table)
     membershipPlanId: z.string().min(1, 'Membership plan is required'),
     membershipStartDate: z.string().min(1, 'Start date is required'),
     membershipEndDate: z.string().min(1, 'End date is required'),
     paymentStatus: z.enum(['Paid', 'Pending']),
+    registrationFee: z.number().min(0).default(0),
     trainerId: z.string().optional(),
 });
 
 export type MemberFormData = z.infer<typeof memberSchema>;
 
-export interface Member extends MemberFormData {
+// What the backend returns for a Member record (no membership fields)
+export interface MemberRecord {
     id: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    gender: string;
+    dateOfBirth: string;
+    joinDate: string;
+    branchId?: string;
+    branchName?: string;
+    status: string;
+    email?: string;
+    emergencyContact?: string;
+    address?: string;
+    height?: number;
+    weight?: number;
+    medicalConditions?: string;
+    photo?: string;
+    trainerId?: string;
     createdAt: string;
+}
+
+// What the backend returns for a Membership record
+export interface MembershipRecord {
+    id: string;
+    memberId: string;
+    packageId: string;
+    packageName: string;
+    startDate: string;
+    endDate: string;
+    price: number;
+    discount: number;
+    paymentStatus: string;
+    createdAt: string;
+}
+
+// Combined type used by the frontend (member + active membership)
+export interface Member extends MemberRecord {
+    // Active membership data (populated from Memberships table)
+    membershipId?: string;
+    membershipPlanId?: string;
+    membershipStartDate?: string;
+    membershipEndDate?: string;
+    paymentStatus?: string;
 }
 
 export interface PaymentRecord {
@@ -42,3 +85,4 @@ export interface PaymentRecord {
     planName: string;
     amount: number;
 }
+

@@ -1,14 +1,27 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, Plus, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { CustomSelect } from '@/components/ui/CustomSelect';
+import { CustomDateInput } from '@/components/ui/CustomDateInput';
+import { CustomTimeInput } from '@/components/ui/CustomTimeInput';
 
 import { trainerSchema } from '../schemas/trainer-schema';
 import { trainersApi } from '../api/trainers-api';
 import type { TrainerFormData, Trainer } from '../types';
 import { useBranches } from '@/hooks/useBranches';
+
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
+
+function parseAvailability(value?: string) {
+    if (!value) return { days: [] as string[], startTime: '', endTime: '' };
+    const match = value.match(/^([^\s]+)(?:\s+(\d{2}:\d{2})-(\d{2}:\d{2}))?$/);
+    if (!match) return { days: [] as string[], startTime: '', endTime: '' };
+    const days = match[1].split(',').filter(d => (DAYS as readonly string[]).includes(d));
+    return { days, startTime: match[2] ?? '', endTime: match[3] ?? '' };
+}
 
 interface Props {
     isOpen: boolean;
@@ -51,6 +64,10 @@ export function TrainerFormDialog({ isOpen, onClose, initialData }: Props) {
                     ...initialData,
                     dateOfBirth: initialData.dateOfBirth ? initialData.dateOfBirth.split('T')[0] : '',
                 } as any);
+                const parsed = parseAvailability(initialData.availability);
+                setSelectedDays(parsed.days);
+                setAvailStartTime(parsed.startTime);
+                setAvailEndTime(parsed.endTime);
             } else {
                 reset({
                     firstName: '',
@@ -64,12 +81,41 @@ export function TrainerFormDialog({ isOpen, onClose, initialData }: Props) {
                     availability: '',
                     certifications: [],
                 });
+                setSelectedDays([]);
+                setAvailStartTime('');
+                setAvailEndTime('');
             }
         }
     }, [initialData, isOpen, reset]);
 
     const [certInput, setCertInput] = useState('');
     const currentCerts = watch('certifications') || [];
+
+    // --- Availability state ---
+    const [selectedDays, setSelectedDays] = useState<string[]>([]);
+    const [availStartTime, setAvailStartTime] = useState('');
+    const [availEndTime, setAvailEndTime] = useState('');
+
+    const syncAvailability = useCallback(
+        (days: string[], start: string, end: string) => {
+            if (days.length === 0) { setValue('availability', ''); return; }
+            const timeStr = start && end ? ` ${start}-${end}` : '';
+            setValue('availability', `${days.join(',')}${timeStr}`);
+        },
+        [setValue]
+    );
+
+    useEffect(() => {
+        syncAvailability(selectedDays, availStartTime, availEndTime);
+    }, [selectedDays, availStartTime, availEndTime, syncAvailability]);
+
+    const toggleDay = (day: string) => {
+        setSelectedDays(prev => {
+            const next = prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day];
+            return next;
+        });
+    };
+    // -------------------------
 
     const handleAddCert = () => {
         if (!certInput.trim()) return;
@@ -182,10 +228,10 @@ export function TrainerFormDialog({ isOpen, onClose, initialData }: Props) {
 
                                 <div className="sm:col-span-2">
                                     <label className="block text-sm font-medium text-foreground mb-1.5">Date of Birth (Optional)</label>
-                                    <input
-                                        type="date"
+                                    <CustomDateInput
                                         {...register('dateOfBirth')}
-                                        className="w-full sm:max-w-xs px-3 py-2 bg-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                                        value={watch('dateOfBirth') as string | undefined}
+                                        className="sm:max-w-xs"
                                     />
                                 </div>
                             </div>
@@ -210,40 +256,67 @@ export function TrainerFormDialog({ isOpen, onClose, initialData }: Props) {
 
                                 <div>
                                     <label className="block text-sm font-medium text-foreground mb-1.5">Assigned Branch *</label>
-                                    <select
+                                    <CustomSelect
                                         {...register('branchId')}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                                        value={watch('branchId')}
+                                        placeholder={branchesLoading ? 'Loading branches...' : (branches?.length === 0 ? 'No branches available' : 'Select a branch')}
                                         disabled={branchesLoading}
-                                    >
-                                        <option value="">{branchesLoading ? 'Loading branches...' : (branches?.length === 0 ? 'No branches available' : 'Select a branch')}</option>
-                                        {branches?.map((b) => (
-                                            <option key={b.id} value={b.id}>{b.name}</option>
-                                        ))}
-                                    </select>
+                                        options={branches?.map(b => ({ value: b.id, label: b.name })) ?? []}
+                                    />
                                     {errors.branchId && <p className="mt-1 text-xs text-destructive">{errors.branchId.message}</p>}
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-foreground mb-1.5">Status *</label>
-                                    <select
+                                    <CustomSelect
                                         {...register('status')}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
-                                    >
-                                        <option value="Active">Active</option>
-                                        <option value="Inactive">Inactive</option>
-                                        <option value="On Leave">On Leave</option>
-                                    </select>
+                                        value={watch('status')}
+                                        options={[
+                                            { value: 'Active', label: 'Active' },
+                                            { value: 'Inactive', label: 'Inactive' },
+                                            { value: 'On Leave', label: 'On Leave' },
+                                        ]}
+                                    />
                                     {errors.status && <p className="mt-1 text-xs text-destructive">{errors.status.message}</p>}
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-foreground mb-1.5">General Availability</label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. Mon-Fri 8AM-5PM"
-                                        {...register('availability')}
-                                        className="w-full px-3 py-2 bg-background border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
-                                    />
+                                <div className="sm:col-span-2">
+                                    <label className="block text-sm font-medium text-foreground mb-2">General Availability</label>
+                                    {/* Day toggles */}
+                                    <div className="flex flex-wrap gap-2 mb-3">
+                                        {DAYS.map(day => (
+                                            <button
+                                                key={day}
+                                                type="button"
+                                                onClick={() => toggleDay(day)}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                                                    selectedDays.includes(day)
+                                                        ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                                                        : 'bg-background text-muted-foreground border-input hover:border-primary/50 hover:text-foreground'
+                                                }`}
+                                            >
+                                                {day}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {/* Time range */}
+                                    <div className="flex items-end gap-3">
+                                        <div className="flex-1">
+                                            <label className="block text-xs text-muted-foreground mb-1">From</label>
+                                            <CustomTimeInput
+                                                value={availStartTime}
+                                                onChange={e => setAvailStartTime(e.target.value)}
+                                            />
+                                        </div>
+                                        <span className="text-muted-foreground pb-2.5 select-none">—</span>
+                                        <div className="flex-1">
+                                            <label className="block text-xs text-muted-foreground mb-1">To</label>
+                                            <CustomTimeInput
+                                                value={availEndTime}
+                                                onChange={e => setAvailEndTime(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div>

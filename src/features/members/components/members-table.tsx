@@ -1,35 +1,79 @@
 // src/features/members/components/members-table.tsx
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     createColumnHelper,
     flexRender,
     getCoreRowModel,
     useReactTable,
 } from '@tanstack/react-table';
-import { Edit2, User, CreditCard, ChevronRight, MapPin, Shield } from 'lucide-react';
+import { Edit2, User, Trash2, Shield, UserCheck, UserX, RotateCcw, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 import { membersApi } from '../api/members-api';
 import type { Member } from '../types';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePackages } from '@/hooks/usePackages';
+import { useTrainers } from '@/hooks/useTrainers';
 
 interface MembersTableProps {
     onEdit: (member: Member) => void;
-    onManageProfile: (member: Member) => void;
+    onRowClick: (member: Member) => void;
+    mode?: 'active' | 'inactive';
 }
 
-export function MembersTable({ onEdit, onManageProfile }: MembersTableProps) {
+export function MembersTable({ onEdit, onRowClick, mode = 'active' }: MembersTableProps) {
+    const queryClient = useQueryClient();
+    const [removeTarget, setRemoveTarget] = useState<Member | null>(null);
     const { data: members, isLoading, isError } = useQuery({
-        queryKey: ['members'],
-        queryFn: membersApi.getMembers,
+        queryKey: mode === 'inactive' ? ['members-inactive'] : ['members'],
+        queryFn: mode === 'inactive' ? membersApi.getInactiveMembers : membersApi.getMembers,
     });
+    const { data: packages } = usePackages();
+    const { data: trainers } = useTrainers();
+
+    const deleteMutation = useMutation({
+        mutationFn: membersApi.deleteMember,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['members'] });
+            queryClient.invalidateQueries({ queryKey: ['members-inactive'] });
+            toast.success('Member permanently deleted');
+        },
+        onError: () => toast.error('Failed to delete member'),
+    });
+
+    const deactivateMutation = useMutation({
+        mutationFn: membersApi.deactivateMember,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['members'] });
+            queryClient.invalidateQueries({ queryKey: ['members-inactive'] });
+            toast.success('Member deactivated');
+        },
+        onError: () => toast.error('Failed to deactivate member'),
+    });
+
+    const reactivateMutation = useMutation({
+        mutationFn: membersApi.reactivateMember,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['members'] });
+            queryClient.invalidateQueries({ queryKey: ['members-inactive'] });
+            toast.success('Member reactivated');
+        },
+        onError: () => toast.error('Failed to reactivate member'),
+    });
+
+    const handleReactivate = (e: React.MouseEvent, member: Member) => {
+        e.stopPropagation();
+        reactivateMutation.mutate(member.id);
+    };
 
     const columnHelper = createColumnHelper<Member>();
 
     const columns = [
         columnHelper.accessor((row) => `${row.firstName} ${row.lastName}`, {
             id: 'name',
-            header: 'FACILITY ATHLETE',
+            header: 'MEMBER',
             cell: (info) => {
                 const member = info.row.original;
                 return (
@@ -42,8 +86,13 @@ export function MembersTable({ onEdit, onManageProfile }: MembersTableProps) {
                             )}
                         </div>
                         <div className="flex flex-col">
-                            <div className="font-bold text-white text-base tracking-tight mb-1 group-hover:text-[var(--primary)] transition-colors">
+                            <div className="font-bold text-white text-base tracking-tight mb-1 group-hover:text-[var(--primary)] transition-colors flex items-center gap-2">
                                 {info.getValue()}
+                                {mode === 'inactive' && (
+                                    <span className="text-[9px] font-black uppercase tracking-widest bg-gray-500/20 text-gray-400 border border-gray-500/30 rounded px-2 py-0.5">
+                                        Inactive
+                                    </span>
+                                )}
                             </div>
                             <div className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase tracking-widest">{member.phone}</div>
                         </div>
@@ -51,54 +100,48 @@ export function MembersTable({ onEdit, onManageProfile }: MembersTableProps) {
                 );
             },
         }),
-        columnHelper.accessor('branchId', {
-            header: 'SECTOR',
-            cell: (info) => (
-                <div className="flex items-center gap-3">
-                    <MapPin className="w-4 h-4 text-[var(--secondary)]" />
-                    <span className="font-bold text-white uppercase text-[11px] tracking-wider">{info.getValue() || 'CORE UNIT'}</span>
-                </div>
-            ),
-        }),
         columnHelper.accessor('membershipPlanId', {
             header: 'PACKAGE',
-            cell: (info) => (
-                <div className="flex flex-col">
-                    <div className="flex items-center gap-2">
-                         <Shield className="w-4 h-4 text-[var(--secondary)]" />
-                         <span className="font-bold text-white uppercase text-[11px] tracking-wider">
-                            {info.row.original.membershipPlanId || 'PROBATION'}
-                         </span>
-                    </div>
-                </div>
-            ),
-        }),
-        columnHelper.accessor('status', {
-            header: 'STATUS',
             cell: (info) => {
-                const status = info.getValue();
-                const isActive = status === 'Active';
+                const planId = info.getValue();
+                const planName = packages?.find(p => p.id === planId)?.name;
                 return (
-                    <div className="flex items-center gap-3">
-                         <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-[var(--success)] animate-pulse shadow-[0_0_8px_var(--success)]' : 'bg-[var(--danger)]'}`} />
-                         <span className={`font-black uppercase text-[10px] tracking-widest ${isActive ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
-                            {isActive ? 'ACTIVE' : 'OFFLINE'}
-                         </span>
+                    <div className="flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-[var(--secondary)] shrink-0" />
+                        <span className="font-bold text-white text-[11px] tracking-wider">
+                            {planName ?? (planId ? '...' : '— No Package')}
+                        </span>
+                    </div>
+                );
+            },
+        }),
+        columnHelper.accessor('trainerId', {
+            header: 'TRAINER',
+            cell: (info) => {
+                const trainerId = info.getValue();
+                const trainer = trainers?.find(t => t.id === trainerId);
+                const trainerName = trainer ? `${trainer.firstName} ${trainer.lastName}` : null;
+                return (
+                    <div className="flex items-center gap-2">
+                        <UserCheck className="w-4 h-4 text-[var(--text-tertiary)] shrink-0" />
+                        <span className={`font-bold text-[11px] tracking-wider ${trainerName ? 'text-white' : 'text-[var(--text-tertiary)]'}`}>
+                            {trainerName ?? 'None Assigned'}
+                        </span>
                     </div>
                 );
             },
         }),
         columnHelper.accessor('paymentStatus', {
-            header: 'CAPITAL',
+            header: 'PAYMENT',
             cell: (info) => {
                 const status = info.getValue();
                 const isPaid = status === 'Paid';
                 return (
-                    <Badge 
+                    <Badge
                         variant={isPaid ? 'success' : 'warning'}
-                        className="font-black tracking-widest text-[9px] px-3 py-1 bg-[var(--surface-alt)] border-[var(--border)] uppercase"
+                        className="font-black tracking-widest text-[9px] px-3 py-1 uppercase"
                     >
-                        {isPaid ? 'VAL' : 'AWT'}
+                        {isPaid ? 'Paid' : 'Pending'}
                     </Badge>
                 );
             },
@@ -108,32 +151,49 @@ export function MembersTable({ onEdit, onManageProfile }: MembersTableProps) {
             header: '',
             cell: ({ row }) => {
                 const member = row.original;
+                if (mode === 'inactive') {
+                    return (
+                        <div className="flex justify-end gap-3 px-6 opacity-0 group-hover:opacity-100 transition-all scale-95 group-hover:scale-100 duration-300">
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={(e) => handleReactivate(e, member)}
+                                className="bg-[var(--surface-alt)] border-[var(--border)] h-10 px-4 gap-2 hover:border-green-500/50 hover:text-green-400 rounded-lg text-[11px] font-black tracking-wider"
+                                title="Reactivate Member"
+                            >
+                                <RotateCcw className="w-3.5 h-3.5" /> REACTIVATE
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); setRemoveTarget(member); }}
+                                className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 hover:border-red-500/50 hover:text-red-400 rounded-lg"
+                                title="Delete Permanently"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    );
+                }
                 return (
                     <div className="flex justify-end gap-3 px-6 opacity-0 group-hover:opacity-100 transition-all scale-95 group-hover:scale-100 duration-300">
                         <Button
                             variant="secondary"
                             size="sm"
-                            onClick={(e) => { e.stopPropagation(); onManageProfile(member); }}
-                            className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 hover:border-[var(--secondary)]/50 hover:text-[var(--secondary)] rounded-lg"
-                            title="Capital Management"
-                        >
-                            <CreditCard className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            size="sm"
                             onClick={(e) => { e.stopPropagation(); onEdit(member); }}
                             className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 hover:border-[var(--primary)]/50 hover:text-[var(--primary)] rounded-lg"
-                            title="Edit Profile"
+                            title="Edit Member"
                         >
                             <Edit2 className="w-4 h-4" />
                         </Button>
                         <Button
                             variant="secondary"
                             size="sm"
-                            className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 hover:bg-[var(--surface-hover)] rounded-lg"
+                            onClick={(e) => { e.stopPropagation(); setRemoveTarget(member); }}
+                            className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 hover:border-red-500/50 hover:text-red-400 rounded-lg"
+                            title="Remove Member"
                         >
-                            <ChevronRight className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" />
                         </Button>
                     </div>
                 );
@@ -182,16 +242,20 @@ export function MembersTable({ onEdit, onManageProfile }: MembersTableProps) {
                          <User className="w-6 h-6 text-white" />
                     </div>
                 </div>
-                <h3 className="text-4xl font-display font-black text-white uppercase tracking-tighter">ZERO ATHLETES</h3>
+                <h3 className="text-4xl font-display font-black text-white uppercase tracking-tighter">
+                    {mode === 'inactive' ? 'NO OFFBOARDED MEMBERS' : 'ZERO ATHLETES'}
+                </h3>
                 <p className="text-[var(--text-secondary)] mt-4 max-w-md mx-auto font-bold text-base leading-relaxed">
-                    The facility is currently inactive. No registered personnel detected in the tactical bio-registry.
+                    {mode === 'inactive'
+                        ? 'No deactivated members found. All athletes are currently active.'
+                        : 'The facility is currently inactive. No registered personnel detected in the tactical bio-registry.'}
                 </p>
-                <Button className="mt-10 px-12 h-16 text-lg font-black bg-[var(--secondary)] shadow-2xl shadow-blue-950/40">INITIATE RECRUITMENT</Button>
             </div>
         );
     }
 
     return (
+        <>
         <div className="overflow-x-auto rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl premium-card">
             <table className="w-full text-left border-collapse min-w-[1000px]">
                 <thead>
@@ -213,7 +277,8 @@ export function MembersTable({ onEdit, onManageProfile }: MembersTableProps) {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.03 }}
                                 key={row.id}
-                                className="hover:bg-[var(--surface-alt)]/40 transition-all group cursor-default"
+                                onClick={() => onRowClick(row.original)}
+                                className={`hover:bg-[var(--surface-alt)]/40 transition-all group cursor-pointer ${mode === 'inactive' ? 'opacity-60 hover:opacity-100' : ''}`}
                             >
                                 {row.getVisibleCells().map((cell) => (
                                     <td key={cell.id} className="px-8 py-5 whitespace-nowrap">
@@ -226,5 +291,94 @@ export function MembersTable({ onEdit, onManageProfile }: MembersTableProps) {
                 </tbody>
             </table>
         </div>
+
+        {/* Remove Member Dialog */}
+        <AnimatePresence>
+            {removeTarget && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+                    onClick={() => setRemoveTarget(null)}
+                >
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.92, y: 20 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                        className="w-full max-w-md bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="p-6 border-b border-[var(--border)] flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
+                                <AlertTriangle className="w-6 h-6 text-red-400" />
+                            </div>
+                            <div>
+                                <h3 className="font-display font-black text-lg uppercase tracking-tight text-white">
+                                    Remove Member
+                                </h3>
+                                <p className="text-[var(--text-secondary)] text-sm mt-1 font-medium">
+                                    {removeTarget.firstName} {removeTarget.lastName}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Options */}
+                        <div className="p-6 space-y-3">
+                            {/* Deactivate option */}
+                            <button
+                                className="w-full flex items-start gap-4 p-4 rounded-xl border border-orange-500/20 bg-orange-500/5 hover:bg-orange-500/10 hover:border-orange-500/40 transition-all text-left group"
+                                onClick={() => {
+                                    deactivateMutation.mutate(removeTarget.id);
+                                    setRemoveTarget(null);
+                                }}
+                            >
+                                <div className="w-10 h-10 rounded-lg bg-orange-500/15 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-orange-500/25 transition-colors">
+                                    <UserX className="w-5 h-5 text-orange-400" />
+                                </div>
+                                <div>
+                                    <div className="font-black text-orange-400 text-sm uppercase tracking-wider">Deactivate</div>
+                                    <div className="text-[var(--text-secondary)] text-[11px] mt-1 leading-relaxed">
+                                        Member is hidden from the main list. Payment history is preserved. Can be reactivated anytime.
+                                    </div>
+                                </div>
+                            </button>
+
+                            {/* Delete option */}
+                            <button
+                                className="w-full flex items-start gap-4 p-4 rounded-xl border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/40 transition-all text-left group"
+                                onClick={() => {
+                                    deleteMutation.mutate(removeTarget.id);
+                                    setRemoveTarget(null);
+                                }}
+                            >
+                                <div className="w-10 h-10 rounded-lg bg-red-500/15 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-red-500/25 transition-colors">
+                                    <Trash2 className="w-5 h-5 text-red-400" />
+                                </div>
+                                <div>
+                                    <div className="font-black text-red-400 text-sm uppercase tracking-wider">Delete Permanently</div>
+                                    <div className="text-[var(--text-secondary)] text-[11px] mt-1 leading-relaxed">
+                                        All records including payments and memberships are removed. A deletion log is kept for reference.
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
+
+                        {/* Cancel */}
+                        <div className="px-6 pb-6">
+                            <button
+                                className="w-full py-3 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] text-sm font-bold hover:bg-white/5 transition-colors"
+                                onClick={() => setRemoveTarget(null)}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+        </>
     );
 }

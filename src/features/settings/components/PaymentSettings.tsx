@@ -2,9 +2,11 @@
 import { CreditCard, Banknote, Receipt, Percent } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useState } from 'react';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 export function PaymentSettings() {
     const [selectedMethod, setSelectedMethod] = useState('cash');
+    const [currency, setCurrency] = useState('LKR');
 
     const methods = [
         { id: 'cash', label: 'Cash', icon: <Banknote className="w-5 h-5" /> },
@@ -50,12 +52,16 @@ export function PaymentSettings() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-2 block">Currency</label>
-                        <select className="w-full bg-[var(--surface-alt)] border border-[var(--border)] rounded-xl py-3.5 px-5 text-sm font-bold text-white outline-none focus:border-[var(--primary)] appearance-none cursor-pointer">
-                            <option value="LKR">LKR — Sri Lankan Rupee</option>
-                            <option value="USD">USD — US Dollar</option>
-                            <option value="EUR">EUR — Euro</option>
-                            <option value="GBP">GBP — British Pound</option>
-                        </select>
+                        <CustomSelect
+                            value={currency}
+                            onChange={e => setCurrency(e.target.value)}
+                            options={[
+                                { value: 'LKR', label: 'LKR — Sri Lankan Rupee' },
+                                { value: 'USD', label: 'USD — US Dollar' },
+                                { value: 'EUR', label: 'EUR — Euro' },
+                                { value: 'GBP', label: 'GBP — British Pound' },
+                            ]}
+                        />
                     </div>
                     <div>
                         <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-2 block">Tax Rate (%)</label>

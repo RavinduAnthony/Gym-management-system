@@ -1,6 +1,6 @@
 // src/features/members/pages/members-list-page.tsx
 import { useState } from 'react';
-import { UserPlus, Filter, Download } from 'lucide-react';
+import { UserPlus, Filter, Download, UserX } from 'lucide-react';
 import { MembersTable } from '../components/members-table';
 import { MemberFormDialog } from '../components/member-form-dialog';
 import { MemberDetailsDialog } from '../components/member-details-dialog';
@@ -8,12 +8,15 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { StatCounter } from '@/components/ui/StatCounter';
 import type { Member } from '../types';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { membersApi } from '../api/members-api';
 
 export function MembersListPage() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+    const [showOffboarded, setShowOffboarded] = useState(false);
 
     const handleCreateNew = () => {
         setSelectedMember(null);
@@ -30,12 +33,19 @@ export function MembersListPage() {
         setIsDetailsOpen(true);
     };
 
+    const { data: members = [] } = useQuery({ queryKey: ['members'], queryFn: membersApi.getMembers });
+    const { data: inactiveMembers = [] } = useQuery({ queryKey: ['members-inactive'], queryFn: membersApi.getInactiveMembers });
+
+    const activeMembers = members.filter(m => m.status === 'Active').length;
+    const pendingMembers = members.filter(m => m.status !== 'Active' && m.status !== 'Inactive').length;
+    const offboardedCount = inactiveMembers.length;
+
     const stats = [
-        { label: 'Active Roster', value: 186, color: 'var(--success)' },
-        { label: 'Expiring Soon', value: 14, color: 'var(--warning)' },
-        { label: 'Pending Ops', value: 8, color: 'var(--info)' },
-        { label: 'Offboarded', value: 40, color: 'var(--text-tertiary)' },
-    ];
+        { label: 'Active Roster', value: activeMembers, color: 'var(--success)', onClick: () => setShowOffboarded(false) },
+        { label: 'Expiring Soon', value: 0, color: 'var(--warning)', onClick: undefined },
+        { label: 'Pending Ops', value: pendingMembers, color: 'var(--info)', onClick: undefined },
+        { label: 'Offboarded', value: offboardedCount, color: 'var(--text-tertiary)', onClick: () => setShowOffboarded(v => !v), isOffboarded: true },
+    ] as const;
 
     return (
         <div className="space-y-10 py-6">
@@ -75,17 +85,53 @@ export function MembersListPage() {
                        animate={{ opacity: 1, scale: 1 }}
                        transition={{ delay: i * 0.05 }}
                    >
-                       <Card className="p-8 flex flex-col items-center justify-center text-center border-white/5 bg-[var(--surface)] hover:border-[var(--primary)]/20 transition-all group" hover={true}>
+                       <Card
+                           className={`p-8 flex flex-col items-center justify-center text-center border-white/5 bg-[var(--surface)] transition-all group ${stat.onClick ? 'cursor-pointer' : ''} ${showOffboarded && 'isOffboarded' in stat && stat.isOffboarded ? 'border-[var(--primary)]/30 bg-[var(--primary)]/5' : 'hover:border-[var(--primary)]/20'}`}
+                           hover={!!stat.onClick}
+                           onClick={stat.onClick}
+                       >
                            <span className="text-[11px] font-black uppercase tracking-[0.4em] text-[var(--text-tertiary)] mb-3 group-hover:text-[var(--primary)] transition-colors">{stat.label}</span>
                            <div className="text-4xl font-display font-black" style={{ color: stat.color }}>
                                <StatCounter value={stat.value} />
                            </div>
+                           {'isOffboarded' in stat && stat.isOffboarded && (
+                               <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-tertiary)] mt-2">
+                                   {showOffboarded ? 'click to hide' : 'click to view'}
+                               </span>
+                           )}
                        </Card>
                    </motion.div>
                ))}
             </div>
 
-            {/* Table Section */}
+            {/* Offboarded Members Section */}
+            <AnimatePresence>
+                {showOffboarded && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <Card className="p-0 overflow-hidden border-gray-500/20 bg-[var(--surface)] shadow-2xl" hover={false}>
+                            <div className="p-6 border-b border-gray-500/10 bg-gray-500/5 flex items-center gap-3">
+                                <UserX className="w-5 h-5 text-gray-400" />
+                                <h3 className="font-display font-black text-lg uppercase tracking-widest text-gray-400">Offboarded Members</h3>
+                                <span className="ml-auto text-[11px] font-black uppercase tracking-widest text-gray-500 bg-gray-500/10 border border-gray-500/20 rounded-full px-3 py-1">
+                                    {offboardedCount} member{offboardedCount !== 1 ? 's' : ''}
+                                </span>
+                            </div>
+                            <MembersTable
+                                onEdit={handleEdit}
+                                onRowClick={handleManageProfile}
+                                mode="inactive"
+                            />
+                        </Card>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Active Members Table Section */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -97,7 +143,7 @@ export function MembersListPage() {
                     </div>
                     <MembersTable
                         onEdit={handleEdit}
-                        onManageProfile={handleManageProfile}
+                        onRowClick={handleManageProfile}
                     />
                 </Card>
             </motion.div>

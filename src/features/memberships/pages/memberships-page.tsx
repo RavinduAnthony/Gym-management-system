@@ -1,21 +1,36 @@
 // src/features/memberships/pages/memberships-page.tsx
 import { useState } from 'react';
 import { Plus, Package, Rocket, Zap } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { MembershipsTable } from '../components/memberships-table';
 import { MembershipFormDialog } from '../components/membership-form-dialog';
+import { PackageDetailsDialog } from '../components/package-details-dialog';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { StatCounter } from '@/components/ui/StatCounter';
 import type { MembershipPackage } from '../types';
+import { membershipsApi } from '../api/memberships-api';
 import { motion } from 'framer-motion';
 
 export function MembershipsPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingPackage, setEditingPackage] = useState<MembershipPackage | null>(null);
+    const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+    const [selectedPackage, setSelectedPackage] = useState<MembershipPackage | null>(null);
+
+    const { data: packages } = useQuery({
+        queryKey: ['memberships'],
+        queryFn: membershipsApi.getPackages,
+    });
 
     const handleEdit = (pkg: MembershipPackage) => {
         setEditingPackage(pkg);
         setIsDialogOpen(true);
+    };
+
+    const handleRowClick = (pkg: MembershipPackage) => {
+        setSelectedPackage(pkg);
+        setIsDetailsOpen(true);
     };
 
     const handleClose = () => {
@@ -23,10 +38,14 @@ export function MembershipsPage() {
         setEditingPackage(null);
     };
 
+    const totalPackages = packages?.length ?? 0;
+    const activePackages = packages?.filter(p => p.status === 'Active').length ?? 0;
+    const inactivePackages = packages?.filter(p => p.status !== 'Active').length ?? 0;
+
     const stats = [
-        { label: 'Active Packages', value: 4, icon: <Package className="w-5 h-5" />, color: 'var(--primary)' },
-        { label: 'Starter Plans', value: 1, icon: <Rocket className="w-5 h-5" />, color: 'var(--success)' },
-        { label: 'Elite Tiers', value: 1, icon: <Zap className="w-5 h-5" />, color: 'var(--warning)' },
+        { label: 'Total Packages', value: totalPackages, icon: <Package className="w-5 h-5" />, color: 'var(--primary)' },
+        { label: 'Active Plans', value: activePackages, icon: <Rocket className="w-5 h-5" />, color: 'var(--success)' },
+        { label: 'Inactive Tiers', value: inactivePackages, icon: <Zap className="w-5 h-5" />, color: 'var(--warning)' },
     ];
 
     return (
@@ -87,7 +106,7 @@ export function MembershipsPage() {
                     <div className="p-6 border-b border-white/5 bg-white/[0.02]">
                          <h3 className="font-display font-black text-lg uppercase tracking-widest text-white/50">Tactical Package Roster</h3>
                     </div>
-                    <MembershipsTable onEdit={handleEdit} />
+                    <MembershipsTable onEdit={handleEdit} onRowClick={handleRowClick} />
                 </Card>
             </motion.div>
 
@@ -98,6 +117,12 @@ export function MembershipsPage() {
                     initialData={editingPackage}
                 />
             )}
+
+            <PackageDetailsDialog
+                isOpen={isDetailsOpen}
+                onClose={() => setIsDetailsOpen(false)}
+                pkg={selectedPackage}
+            />
         </div>
     );
 }
