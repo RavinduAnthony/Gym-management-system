@@ -8,6 +8,7 @@ import {
     BarChart3,
     Settings,
     Building2,
+    Layers,
     type LucideIcon,
 } from 'lucide-react';
 import type { UserRole } from '@/core/types';
@@ -42,6 +43,12 @@ export const NAV_CONFIG: NavItem[] = [
         label: 'Trainers',
         path: '/trainers',
         icon: Dumbbell,
+        roles: ['SuperAdmin', 'Owner'],
+    },
+    {
+        label: 'Services',
+        path: '/services',
+        icon: Layers,
         roles: ['SuperAdmin', 'Owner'],
     },
     {

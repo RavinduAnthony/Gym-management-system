@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, User, Award, Clock, MapPin, Activity, Calendar } from 'lucide-react';
+import { X, User, Award, Clock, MapPin, Activity, Calendar, Dumbbell } from 'lucide-react';
 import { useBranches } from '@/hooks/useBranches';
 import type { Trainer } from '../types';
 
@@ -131,6 +131,14 @@ export function TrainerDetailsDialog({ isOpen, onClose, trainer }: Props) {
                                         <p className="text-xs text-muted-foreground font-medium mb-1">Branch</p>
                                         <p className="text-sm font-bold text-foreground truncate">{branchName}</p>
                                     </div>
+                                    {trainer.trainerTypeName && (
+                                        <div className="p-4 border border-border rounded-xl bg-primary/5 border-primary/20">
+                                            <p className="text-xs text-muted-foreground font-medium mb-1 flex items-center gap-1">
+                                                <Dumbbell className="w-3 h-3" /> Trainer Type
+                                            </p>
+                                            <p className="text-sm font-bold text-primary truncate">{trainer.trainerTypeName}</p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Details grid */}
@@ -153,6 +161,14 @@ export function TrainerDetailsDialog({ isOpen, onClose, trainer }: Props) {
                                                 </span>
                                                 <span className="text-sm font-medium text-foreground">{branchName}</span>
                                             </div>
+                                            {trainer.trainerTypeName && (
+                                                <div className="flex justify-between border-b border-border/50 pb-2">
+                                                    <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                                                        <Dumbbell className="w-3.5 h-3.5" /> Trainer Type
+                                                    </span>
+                                                    <span className="text-sm font-medium text-primary">{trainer.trainerTypeName}</span>
+                                                </div>
+                                            )}
                                             <div className="flex justify-between">
                                                 <span className="text-sm text-muted-foreground">Status</span>
                                                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${statusColor}`}>

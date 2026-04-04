@@ -1,12 +1,14 @@
 // src/features/settings/pages/settings-page.tsx
 import { useState } from 'react';
-import { Building2, Users, Shield, CreditCard, Clock, Settings } from 'lucide-react';
+import { Building2, Users, Shield, CreditCard, Clock, Dumbbell, Layers, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GymProfileSettings } from '../components/GymProfileSettings';
 import { UsersRolesSettings } from '../components/UsersRolesSettings';
 import { MembershipRulesSettings } from '../components/MembershipRulesSettings';
 import { PaymentSettings } from '../components/PaymentSettings';
 import { WorkingHoursSettings } from '../components/WorkingHoursSettings';
+import { TrainerTypeSettings } from '../components/TrainerTypeSettings';
+import { ServiceSettings } from '../components/ServiceSettings';
 
 const TABS = [
     { id: 'gym-profile', label: 'Gym Profile', icon: Building2 },
@@ -14,6 +16,8 @@ const TABS = [
     { id: 'membership-rules', label: 'Membership Rules', icon: Shield },
     { id: 'payments', label: 'Payments', icon: CreditCard },
     { id: 'working-hours', label: 'Working Hours', icon: Clock },
+    { id: 'trainer-settings', label: 'Trainer Settings', icon: Dumbbell },
+    { id: 'service-settings', label: 'Service Settings', icon: Layers },
 ];
 
 const TAB_CONTENT: Record<string, React.ReactNode> = {
@@ -22,6 +26,8 @@ const TAB_CONTENT: Record<string, React.ReactNode> = {
     'membership-rules': <MembershipRulesSettings />,
     'payments': <PaymentSettings />,
     'working-hours': <WorkingHoursSettings />,
+    'trainer-settings': <TrainerTypeSettings />,
+    'service-settings': <ServiceSettings />,
 };
 
 export function SettingsPage() {

@@ -1,4 +1,4 @@
-export interface PaymentSchedule {
+﻿export interface PaymentSchedule {
     id: string;
     memberId: string;
     memberName: string;
@@ -30,6 +30,7 @@ export interface PaymentHistory {
 
 export interface PaymentDashboardSummary {
     totalRevenue: number;
+    thisYearRevenue: number;
     thisMonthRevenue: number;
     pendingCount: number;
     pendingAmount: number;

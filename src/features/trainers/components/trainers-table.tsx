@@ -6,7 +6,7 @@ import {
     getCoreRowModel,
     useReactTable,
 } from '@tanstack/react-table';
-import { CalendarRange, Edit2, Trash2, User, MoreVertical, ShieldCheck } from 'lucide-react';
+import { CalendarRange, Edit2, Trash2, User, MoreVertical, Dumbbell } from 'lucide-react';
 import { toast } from 'sonner';
 import { deleteToastClassNames } from '@/lib/toast-styles';
 import { trainersApi } from '../api/trainers-api';
@@ -85,16 +85,14 @@ export function TrainersTable({ onEdit, onViewSchedule, onRowClick }: TrainersTa
                 );
             },
         }),
-        columnHelper.accessor('specialization', {
-            header: 'TECHNICAL DOMAIN',
+        columnHelper.accessor('trainerTypeName', {
+            header: 'TRAINER TYPE',
             cell: (info) => (
-                <div className="flex flex-col">
-                    <div className="flex items-center gap-2">
-                         <ShieldCheck className="w-4 h-4 text-[var(--secondary)]" />
-                         <span className="font-bold text-white uppercase text-[11px] tracking-wider">
-                            {info.getValue() || 'CORE STRENGTH'}
-                         </span>
-                    </div>
+                <div className="flex items-center gap-2">
+                    <Dumbbell className="w-4 h-4 text-[var(--primary)]" />
+                    <span className="font-bold text-white uppercase text-[11px] tracking-wider">
+                        {info.getValue() || <span className="text-[var(--text-tertiary)] font-normal normal-case">—</span>}
+                    </span>
                 </div>
             ),
         }),

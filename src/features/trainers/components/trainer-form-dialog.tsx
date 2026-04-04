@@ -1,8 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { X, Plus, CheckCircle2 } from 'lucide-react';
+import { X, Plus, CheckCircle2, Camera, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { CustomDateInput } from '@/components/ui/CustomDateInput';
@@ -12,6 +12,7 @@ import { trainerSchema } from '../schemas/trainer-schema';
 import { trainersApi } from '../api/trainers-api';
 import type { TrainerFormData, Trainer } from '../types';
 import { useBranches } from '@/hooks/useBranches';
+import { useTrainerTypes } from '@/hooks/useTrainerTypes';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
 
@@ -21,6 +22,19 @@ function parseAvailability(value?: string) {
     if (!match) return { days: [] as string[], startTime: '', endTime: '' };
     const days = match[1].split(',').filter(d => (DAYS as readonly string[]).includes(d));
     return { days, startTime: match[2] ?? '', endTime: match[3] ?? '' };
+}
+
+function calculateAge(dob: string): string {
+    if (!dob) return '';
+    const birth = new Date(dob);
+    if (isNaN(birth.getTime())) return '';
+    const today = new Date();
+    let years = today.getFullYear() - birth.getFullYear();
+    let months = today.getMonth() - birth.getMonth();
+    if (today.getDate() < birth.getDate()) months--;
+    if (months < 0) { years--; months += 12; }
+    if (years < 0) return '';
+    return `${years} year${years !== 1 ? 's' : ''}, ${months} month${months !== 1 ? 's' : ''}`;
 }
 
 interface Props {
@@ -33,6 +47,56 @@ export function TrainerFormDialog({ isOpen, onClose, initialData }: Props) {
     const isEditing = !!initialData;
     const queryClient = useQueryClient();
     const { data: branches, isLoading: branchesLoading } = useBranches();
+    const { data: trainerTypes, isLoading: trainerTypesLoading } = useTrainerTypes();
+
+    // --- Photo state ---
+    const [photoFile, setPhotoFile] = useState<File | null>(null);
+    const [photoPreview, setPhotoPreview] = useState<string>('');
+    const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        if (!allowed.includes(file.type)) {
+            toast.error('Only JPEG, PNG, or WebP images are allowed');
+            return;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+            toast.error('Image must be smaller than 2 MB');
+            return;
+        }
+        setPhotoFile(file);
+        setPhotoPreview(URL.createObjectURL(file));
+    };
+
+    const handleRemovePhoto = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        // If preview is a saved Cloudinary URL (not a local blob), delete from backend
+        if (isEditing && initialData?.id && photoPreview && !photoPreview.startsWith('blob:')) {
+            setIsDeletingPhoto(true);
+            try {
+                await trainersApi.deleteTrainerPhoto(initialData.id);
+                queryClient.invalidateQueries({ queryKey: ['trainers'] });
+                toast.success('Photo deleted successfully');
+            } catch {
+                toast.error('Failed to delete photo');
+                setIsDeletingPhoto(false);
+                return;
+            }
+            setIsDeletingPhoto(false);
+        }
+        // Always clear local state
+        setPhotoFile(null);
+        setPhotoPreview('');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const handlePhotoClick = () => {
+        if (!isDeletingPhoto) fileInputRef.current?.click();
+    };
+    // ------------------
 
     const {
         register,
@@ -68,6 +132,9 @@ export function TrainerFormDialog({ isOpen, onClose, initialData }: Props) {
                 setSelectedDays(parsed.days);
                 setAvailStartTime(parsed.startTime);
                 setAvailEndTime(parsed.endTime);
+                // Show existing photo as preview
+                setPhotoFile(null);
+                setPhotoPreview(initialData.photo || '');
             } else {
                 reset({
                     firstName: '',
@@ -84,6 +151,8 @@ export function TrainerFormDialog({ isOpen, onClose, initialData }: Props) {
                 setSelectedDays([]);
                 setAvailStartTime('');
                 setAvailEndTime('');
+                setPhotoFile(null);
+                setPhotoPreview('');
             }
         }
     }, [initialData, isOpen, reset]);
@@ -137,8 +206,8 @@ export function TrainerFormDialog({ isOpen, onClose, initialData }: Props) {
     const mutation = useMutation({
         mutationFn: (data: TrainerFormData) => {
             return isEditing && initialData?.id
-                ? trainersApi.updateTrainer(initialData.id, data)
-                : trainersApi.createTrainer(data);
+                ? trainersApi.updateTrainer(initialData.id, data, photoFile)
+                : trainersApi.createTrainer(data, photoFile);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['trainers'] });
@@ -182,6 +251,49 @@ export function TrainerFormDialog({ isOpen, onClose, initialData }: Props) {
                                 1. Personal & Contact
                             </h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+                                {/* Profile Photo Upload */}
+                                <div className="sm:col-span-2">
+                                    <div className="flex items-center gap-4">
+                                        {/* Clickable avatar — same pattern as gym profile logo */}
+                                        <div
+                                            className={`relative group ${isDeletingPhoto ? 'cursor-wait' : 'cursor-pointer'}`}
+                                            onClick={handlePhotoClick}
+                                        >
+                                            <div className="w-20 h-20 rounded-full bg-muted border-2 border-dashed border-input flex items-center justify-center group-hover:border-ring/60 transition-all overflow-hidden">
+                                                {isDeletingPhoto ? (
+                                                    <Loader2 className="w-7 h-7 text-primary animate-spin" />
+                                                ) : photoPreview ? (
+                                                    <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <Camera className="w-7 h-7 text-muted-foreground group-hover:text-foreground transition-colors" />
+                                                )}
+                                            </div>
+                                            {/* X badge to remove photo */}
+                                            {photoPreview && !isDeletingPhoto && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleRemovePhoto}
+                                                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive hover:bg-destructive/80 text-destructive-foreground flex items-center justify-center shadow-md transition-colors"
+                                                    title="Remove photo"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            )}
+                                        </div>
+                                        <span className="text-xs text-muted-foreground">
+                                            {isDeletingPhoto ? 'Deleting...' : photoPreview ? 'Click to change photo' : 'Click to upload photo'}<br />
+                                            <span className="text-[11px]">JPEG, PNG or WebP · max 2 MB</span>
+                                        </span>
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/jpeg,image/jpg,image/png,image/webp"
+                                            className="hidden"
+                                            onChange={handlePhotoChange}
+                                        />
+                                    </div>
+                                </div>
                                 <div>
                                     <label className="block text-sm font-medium text-foreground mb-1.5">First Name *</label>
                                     <input
@@ -228,11 +340,21 @@ export function TrainerFormDialog({ isOpen, onClose, initialData }: Props) {
 
                                 <div className="sm:col-span-2">
                                     <label className="block text-sm font-medium text-foreground mb-1.5">Date of Birth (Optional)</label>
-                                    <CustomDateInput
-                                        {...register('dateOfBirth')}
-                                        value={watch('dateOfBirth') as string | undefined}
-                                        className="sm:max-w-xs"
-                                    />
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <CustomDateInput
+                                            {...register('dateOfBirth')}
+                                            value={watch('dateOfBirth') as string | undefined}
+                                            className="sm:max-w-xs"
+                                        />
+                                        {(() => {
+                                            const age = calculateAge(watch('dateOfBirth') || '');
+                                            return age ? (
+                                                <span className="inline-flex items-center px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-full text-xs font-semibold">
+                                                    {age}
+                                                </span>
+                                            ) : null;
+                                        })()}
+                                    </div>
                                 </div>
                             </div>
                         </section>
@@ -264,6 +386,17 @@ export function TrainerFormDialog({ isOpen, onClose, initialData }: Props) {
                                         options={branches?.map(b => ({ value: b.id, label: b.name })) ?? []}
                                     />
                                     {errors.branchId && <p className="mt-1 text-xs text-destructive">{errors.branchId.message}</p>}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-foreground mb-1.5">Trainer Type</label>
+                                    <CustomSelect
+                                        {...register('trainerTypeId')}
+                                        value={watch('trainerTypeId') ?? ''}
+                                        placeholder={trainerTypesLoading ? 'Loading types...' : (trainerTypes?.length === 0 ? 'No types defined yet' : 'Select trainer type')}
+                                        disabled={trainerTypesLoading}
+                                        options={trainerTypes?.map(t => ({ value: t.id, label: t.name })) ?? []}
+                                    />
                                 </div>
 
                                 <div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
@@ -76,24 +76,29 @@ export function PaymentsPage() {
         onError: () => toast.error('Failed to refresh late statuses'),
     });
 
-    const filteredSchedules = schedules.filter((s) => {
+    const currentMonth = new Date().toISOString().slice(0, 7); // e.g. "2026-04"
+    const thisMonthSchedules = schedules.filter((s) => s.month === currentMonth);
+
+    const filteredSchedules = thisMonthSchedules.filter((s) => {
         if (filter !== 'All' && s.status !== filter) return false;
         if (search) {
             const q = search.toLowerCase();
             return (
                 s.memberName.toLowerCase().includes(q) ||
-                s.packageName.toLowerCase().includes(q) ||
-                s.month.includes(q)
+                s.packageName.toLowerCase().includes(q)
             );
         }
         return true;
     });
 
+    const pendingThisMonth = thisMonthSchedules.filter((s) => s.status === 'Pending');
+    const lateThisMonth = thisMonthSchedules.filter((s) => s.status === 'Late');
+
     const stats = [
         {
-            label: 'Total Revenue',
-            value: summary?.totalRevenue ?? 0,
-            secondary: '',
+            label: 'Total Income',
+            value: summary?.thisYearRevenue ?? 0,
+            secondary: " total",
             icon: <TrendingUp className="w-5 h-5" />,
             color: 'var(--primary)',
             isLKR: true,
@@ -101,23 +106,23 @@ export function PaymentsPage() {
         {
             label: 'This Month',
             value: summary?.thisMonthRevenue ?? 0,
-            secondary: `${summary?.paidThisMonth ?? 0} payments`,
+            secondary: ` payments`,
             icon: <DollarSign className="w-5 h-5" />,
             color: 'var(--success)',
             isLKR: true,
         },
         {
             label: 'Pending',
-            value: summary?.pendingCount ?? 0,
-            secondary: fmtCurrency(summary?.pendingAmount ?? 0),
+            value: pendingThisMonth.length,
+            secondary: fmtCurrency(pendingThisMonth.reduce((sum, s) => sum + s.amount, 0)),
             icon: <Clock className="w-5 h-5" />,
             color: 'var(--warning)',
             isLKR: false,
         },
         {
             label: 'Late Payments',
-            value: summary?.lateCount ?? 0,
-            secondary: fmtCurrency(summary?.lateAmount ?? 0),
+            value: lateThisMonth.length,
+            secondary: fmtCurrency(lateThisMonth.reduce((sum, s) => sum + s.amount, 0)),
             icon: <AlertTriangle className="w-5 h-5" />,
             color: 'var(--destructive)',
             isLKR: false,
@@ -222,7 +227,7 @@ export function PaymentsPage() {
                                         {f}
                                         {f !== 'All' && (
                                             <span className="ml-1.5 opacity-70">
-                                                {schedules.filter((s) => s.status === f).length}
+                                                {thisMonthSchedules.filter((s) => s.status === f).length}
                                             </span>
                                         )}
                                     </button>

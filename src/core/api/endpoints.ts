@@ -35,4 +35,8 @@ export const ENDPOINTS = {
     // Dashboard & Reports
     DASHBOARD_STATS: '/dashboard/stats',
     REPORTS: '/reports',
+
+    // Gym Classes
+    GYM_CLASSES: '/gymclass',
+    GYM_CLASS_BY_ID: (id: string) => `/gymclass/${id}`,
 } as const;

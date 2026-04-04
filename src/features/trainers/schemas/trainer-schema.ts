@@ -9,6 +9,7 @@ export const trainerSchema = z.object({
     specialization: z.string().min(2, 'Specialization is required'),
     status: z.enum(['Active', 'Inactive', 'On Leave']),
     branchId: z.string().min(1, 'Branch is required'),
+    trainerTypeId: z.string().optional(),
 
     // Optional Fields
     dateOfBirth: z.string().optional(),
@@ -33,6 +34,8 @@ export type TrainerScheduleFormData = z.infer<typeof trainerScheduleSchema>;
 
 export interface Trainer extends TrainerFormData {
     id: string;
+    age?: string;
+    trainerTypeName?: string;
     createdAt: string;
 }
 

@@ -93,6 +93,15 @@ export function MembersTable({ onEdit, onRowClick, mode = 'active' }: MembersTab
                                         Inactive
                                     </span>
                                 )}
+                                {member.memberType === 'Special' ? (
+                                    <span className="text-[9px] font-black uppercase tracking-widest bg-violet-500/15 text-violet-400 border border-violet-500/30 rounded px-2 py-0.5">
+                                        Special
+                                    </span>
+                                ) : (
+                                    <span className="text-[9px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded px-2 py-0.5">
+                                        Monthly
+                                    </span>
+                                )}
                             </div>
                             <div className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase tracking-widest">{member.phone}</div>
                         </div>

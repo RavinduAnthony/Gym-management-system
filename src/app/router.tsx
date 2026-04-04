@@ -37,6 +37,15 @@ const ReportsPage = lazy(() =>
 const SettingsPage = lazy(() =>
     import('@/features/settings/pages/settings-page').then((m) => ({ default: m.SettingsPage }))
 );
+const ServicesHubPage = lazy(() =>
+    import('@/features/services/pages/services-hub-page').then((m) => ({ default: m.ServicesHubPage }))
+);
+const ClassesPage = lazy(() =>
+    import('@/features/services/pages/classes-page').then((m) => ({ default: m.ClassesPage }))
+);
+const PersonalTrainersServicePage = lazy(() =>
+    import('@/features/services/pages/personal-trainers-service-page').then((m) => ({ default: m.PersonalTrainersServicePage }))
+);
 const LandingPage = lazy(() =>
     import('@/features/landing/pages/LandingPage').then((m) => ({ default: m.LandingPage }))
 );
@@ -163,6 +172,30 @@ export const router = createBrowserRouter([
                                 element: (
                                     <SuspenseWrapper>
                                         <SettingsPage />
+                                    </SuspenseWrapper>
+                                ),
+                            },
+                            {
+                                path: '/services',
+                                element: (
+                                    <SuspenseWrapper>
+                                        <ServicesHubPage />
+                                    </SuspenseWrapper>
+                                ),
+                            },
+                            {
+                                path: '/services/classes',
+                                element: (
+                                    <SuspenseWrapper>
+                                        <ClassesPage />
+                                    </SuspenseWrapper>
+                                ),
+                            },
+                            {
+                                path: '/services/personal-trainers',
+                                element: (
+                                    <SuspenseWrapper>
+                                        <PersonalTrainersServicePage />
                                     </SuspenseWrapper>
                                 ),
                             },

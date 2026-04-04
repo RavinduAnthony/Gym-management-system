@@ -1,104 +1,161 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   IronCore Gym SaaS — Global Styles
+   Theme: Dark Gym (Black · Graphite · Deep Red)
+   ───────────────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 @import 'tailwindcss';
 @import './tokens.css';
 @import './themes/light.css';
 @import './themes/dark.css';
 
+/* ── Tailwind v4 theme bridge (direct hex — no hsl() wrapper needed) ── */
 @theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-success: hsl(var(--success));
-  --color-success-foreground: hsl(var(--success-foreground));
-  --color-warning: hsl(var(--warning));
-  --color-warning-foreground: hsl(var(--warning-foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-  --color-sidebar: hsl(var(--sidebar));
-  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-  --color-sidebar-accent: hsl(var(--sidebar-accent));
-  --color-sidebar-border: hsl(var(--sidebar-border));
-  --color-chart-1: hsl(var(--chart-1));
-  --color-chart-2: hsl(var(--chart-2));
-  --color-chart-3: hsl(var(--chart-3));
-  --color-chart-4: hsl(var(--chart-4));
-  --color-chart-5: hsl(var(--chart-5));
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-display: 'Barlow Condensed', 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Base styles */
-* {
-  @apply border-border;
+/* ── Base reset ───────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  border-color: var(--border);
+  box-sizing: border-box;
+}
+
+html {
+  /* Smooth theme transitions */
+  transition: color 0.25s ease, background-color 0.25s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  @apply bg-background text-foreground antialiased;
+  background-color: var(--background);
+  color: var(--foreground);
   font-family: var(--font-sans);
+  line-height: 1.6;
 }
 
-/* Smooth theme transitions */
-html {
-  transition: color 0.2s ease, background-color 0.2s ease;
+/* ── Display font — positive tracking so Barlow Condensed letters
+   never merge at heavy weights. Unlayered author styles cascade over
+   Tailwind's layered tracking-* utilities at equal specificity. ── */
+.font-display {
+  letter-spacing: 0.06em;
 }
 
-/* Scrollbar styling */
+/* ── Scrollbar — thin dark with red accent ───────────────────────────── */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-muted/30;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/20 rounded-full;
+  background: #2A2A2A;
+  border-radius: 999px;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/40;
+  background: #B91C1C;
 }
 
-/* ── Sonner: success toast theme ───────────────────────────────────────── */
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2A2A2A transparent;
+}
+
+/* ── Focus ring: red glow ─────────────────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ── Sonner toast theming ─────────────────────────────────────────────── */
+
+/* Base: match the surface */
+[data-sonner-toast] {
+  background: var(--surface) !important;
+  border-color: var(--border-strong) !important;
+  color: var(--text-primary) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+/* Success */
 [data-sonner-toast][data-type='success'] {
-  background: #052E1A !important;
-  border-color: #22C55E !important;
-  box-shadow: 0 0 24px rgba(34, 197, 94, 0.14) !important;
+  background: #091A0E !important;
+  border-color: #16A34A !important;
+  box-shadow: 0 0 28px rgba(22, 163, 74, 0.14) !important;
 }
+[data-sonner-toast][data-type='success'] [data-title] { color: #D1FAE5 !important; }
+[data-sonner-toast][data-type='success'] [data-description] { color: #86EFAC !important; }
+[data-sonner-toast][data-type='success'] [data-icon] svg { color: #16A34A !important; }
 
-[data-sonner-toast][data-type='success'] [data-title] {
-  color: #D1FAE5 !important;
+/* Error */
+[data-sonner-toast][data-type='error'] {
+  background: #1A0808 !important;
+  border-color: #B91C1C !important;
+  box-shadow: 0 0 28px rgba(185, 28, 28, 0.2) !important;
 }
+[data-sonner-toast][data-type='error'] [data-title] { color: #FEE2E2 !important; }
+[data-sonner-toast][data-type='error'] [data-description] { color: #FCA5A5 !important; }
+[data-sonner-toast][data-type='error'] [data-icon] svg { color: #EF4444 !important; }
 
-[data-sonner-toast][data-type='success'] [data-description] {
-  color: #86EFAC !important;
+/* Warning */
+[data-sonner-toast][data-type='warning'] {
+  background: #1A1100 !important;
+  border-color: #D97706 !important;
+  box-shadow: 0 0 28px rgba(217, 119, 6, 0.14) !important;
 }
+[data-sonner-toast][data-type='warning'] [data-title] { color: #FEF3C7 !important; }
+[data-sonner-toast][data-type='warning'] [data-description] { color: #FDE68A !important; }
+[data-sonner-toast][data-type='warning'] [data-icon] svg { color: #D97706 !important; }
 
-[data-sonner-toast][data-type='success'] [data-icon] svg {
-  color: #22C55E !important;
-}
+/* ── Select / date / time — themed inputs ─────────────────────────────── */
 
-/* ─── Themed form controls: select, date & time inputs ─────────────────── */
-
-/* Remove native dropdown arrow and inject themed SVG chevron */
+/* Custom styled select arrow */
 select {
   appearance: none;
   -webkit-appearance: none;
@@ -109,18 +166,17 @@ select {
   cursor: pointer;
 }
 
-/* Dropdown option list theming */
 select option {
-  background-color: hsl(var(--card));
-  color: hsl(var(--foreground));
+  background-color: var(--card);
+  color: var(--foreground);
 }
 
-/* Calendar / clock icon button */
+/* Calendar / clock picker icon */
 input[type='date']::-webkit-calendar-picker-indicator,
 input[type='time']::-webkit-calendar-picker-indicator,
 input[type='month']::-webkit-calendar-picker-indicator {
   cursor: pointer;
-  opacity: 0.45;
+  opacity: 0.4;
   border-radius: 4px;
   padding: 2px;
   transition: opacity 0.15s, background-color 0.15s;
@@ -130,21 +186,22 @@ input[type='date']::-webkit-calendar-picker-indicator:hover,
 input[type='time']::-webkit-calendar-picker-indicator:hover,
 input[type='month']::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
-  background-color: hsl(var(--accent));
+  background-color: var(--surface-hover);
 }
 
-/* Invert icons white in dark mode */
+/* Invert icons to white in dark mode */
 [data-theme='dark'] input[type='date']::-webkit-calendar-picker-indicator,
 [data-theme='dark'] input[type='time']::-webkit-calendar-picker-indicator,
 [data-theme='dark'] input[type='month']::-webkit-calendar-picker-indicator {
   filter: invert(1);
 }
 
-/* Date/time text inherits theme color properly */
+/* Date/time field text */
 input[type='date']::-webkit-datetime-edit,
 input[type='time']::-webkit-datetime-edit {
   color: inherit;
 }
+
 input[type='date']::-webkit-datetime-edit-fields-wrapper,
 input[type='time']::-webkit-datetime-edit-fields-wrapper {
   padding: 0;
