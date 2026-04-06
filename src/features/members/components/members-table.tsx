@@ -103,7 +103,14 @@ export function MembersTable({ onEdit, onRowClick, mode = 'active' }: MembersTab
                                     </span>
                                 )}
                             </div>
-                            <div className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase tracking-widest">{member.phone}</div>
+                            <div className="flex items-center gap-3">
+                                <div className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase tracking-widest">{member.phone}</div>
+                                {member.membershipNumber && (
+                                    <div className="text-[9px] font-black uppercase tracking-widest bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20 rounded px-2 py-0.5">
+                                        #{member.membershipNumber}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 );

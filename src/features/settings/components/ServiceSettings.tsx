@@ -71,7 +71,7 @@ function ServiceCard({ setting }: { setting: ServiceSetting }) {
             {/* Default Amount */}
             <div>
                 <label className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-2 block">
-                    Default Payment Amount
+                    Default Payment Amount Per Hour
                 </label>
                 <div className="flex items-center gap-0">
                     <span className="h-11 px-4 flex items-center bg-[var(--surface-alt)] border border-r-0 border-[var(--border)] rounded-l-xl text-sm font-black text-[var(--text-secondary)] select-none">

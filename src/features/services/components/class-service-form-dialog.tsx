@@ -89,12 +89,20 @@ export function GymClassFormDialog({ isOpen, onClose, initialData }: Props) {
     // Local state for time inputs (CustomTimeInput uses ChangeEvent not plain string)
     const [startTimeVal, setStartTimeVal] = useState('');
     const [endTimeVal, setEndTimeVal] = useState('');
+    const [hourlyRate, setHourlyRate] = useState<number>(0);
+    const durationMinutes = watch('durationMinutes');
 
     // Auto-calc duration
     useEffect(() => {
         const dur = calcDurationMinutes(startTimeVal, endTimeVal);
         if (dur > 0) setValue('durationMinutes', dur);
     }, [startTimeVal, endTimeVal, setValue]);
+
+    // Recalculate full session fee when hourly rate or duration changes
+    useEffect(() => {
+        const fullFee = parseFloat((hourlyRate * durationMinutes / 60).toFixed(2));
+        setValue('defaultAmount', fullFee, { shouldValidate: false });
+    }, [hourlyRate, durationMinutes, setValue]);
 
     // Reset form on open/close
     useEffect(() => {
@@ -121,16 +129,21 @@ export function GymClassFormDialog({ isOpen, onClose, initialData }: Props) {
                     branchId: initialData.branchId ?? '',
                     status: initialData.status as 'Active' | 'Inactive',
                 });
+                const calcHourly = initialData.durationMinutes > 0
+                    ? parseFloat((initialData.defaultAmount / (initialData.durationMinutes / 60)).toFixed(2))
+                    : classDefaultAmount;
+                setHourlyRate(calcHourly);
             } else {
                 setSelectedDays([]);
                 setStartTimeVal('');
                 setEndTimeVal('');
+                setHourlyRate(classDefaultAmount);
                 reset({
                     name: '', category: '', description: '',
                     instructorId: '', daysOfWeek: [],
                     startTime: '', endTime: '', durationMinutes: 0,
                     batchStartDate: '', batchEndDate: '',
-                    maxCapacity: 20, defaultAmount: classDefaultAmount,
+                    maxCapacity: 20, defaultAmount: 0,
                     branchId: '', status: 'Active',
                 });
             }
@@ -152,7 +165,6 @@ export function GymClassFormDialog({ isOpen, onClose, initialData }: Props) {
 
     const onSubmit = (data: GymClassFormData) => mutation.mutate(data);
     const selectedInstructor = trainers?.find((t: any) => t.id === watch('instructorId'));
-    const durationMinutes = watch('durationMinutes');
 
     if (!isOpen) return null;
 
@@ -443,24 +455,48 @@ export function GymClassFormDialog({ isOpen, onClose, initialData }: Props) {
                                     />
                                     {errors.maxCapacity && <p className={errorCls}>{errors.maxCapacity.message}</p>}
                                 </div>
+
                                 <div>
-                                    <label className={labelCls}>Session Fee (LKR) *</label>
+                                    <label className={labelCls}>Hourly Rate (LKR/hr)</label>
                                     <div className="flex">
-                                        <span className="px-3 flex items-center bg-[var(--surface-alt)] border border-r-0 border-[var(--border)] rounded-l-xl text-xs font-black text-[var(--text-secondary)]">LKR</span>
+                                        <span className="px-3 flex items-center bg-[var(--surface-alt)] border border-r-0 border-[var(--border)] rounded-l-xl text-xs font-black text-[var(--text-secondary)]">LKR/hr</span>
                                         <input
                                             type="number"
                                             min={0}
                                             step={0.01}
-                                            {...register('defaultAmount', { valueAsNumber: true })}
+                                            value={hourlyRate}
+                                            onChange={(e) => setHourlyRate(parseFloat(e.target.value) || 0)}
                                             placeholder="0.00"
                                             className={`${inputCls} rounded-l-none`}
                                         />
                                     </div>
-                                    {errors.defaultAmount && <p className={errorCls}>{errors.defaultAmount.message}</p>}
-                                    {!isEditing && classDefaultAmount > 0 && (
+                                    {classDefaultAmount > 0 && (
                                         <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
-                                            Pre-filled from Service Settings (LKR {classDefaultAmount.toLocaleString()})
+                                            Default from Service Settings: LKR {classDefaultAmount.toLocaleString()}/hr
                                         </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className={labelCls}>Full Session Fee (LKR)</label>
+                                    <div className={`${inputCls} flex items-center justify-between bg-[var(--surface-alt)]/30 cursor-default`}>
+                                        <div className="flex items-center gap-2">
+                                            <CreditCard className="w-4 h-4 text-[var(--text-tertiary)]" />
+                                            <span className={`font-black text-base ${watch('defaultAmount') > 0 ? 'text-[var(--primary)]' : 'text-[var(--text-tertiary)]'}`}>
+                                                {watch('defaultAmount') > 0
+                                                    ? `LKR ${watch('defaultAmount').toLocaleString('en-LK', { minimumFractionDigits: 2 })}`
+                                                    : '—'}
+                                            </span>
+                                        </div>
+                                        {durationMinutes > 0 && hourlyRate > 0 && (
+                                            <span className="text-[10px] text-[var(--text-tertiary)]">
+                                                LKR {hourlyRate}/hr &times; {durationMinutes}min
+                                            </span>
+                                        )}
+                                    </div>
+                                    {errors.defaultAmount && <p className={errorCls}>{errors.defaultAmount.message}</p>}
+                                    {durationMinutes === 0 && (
+                                        <p className="text-[10px] text-amber-500/80 mt-1">Set start &amp; end time in the Schedule tab to calculate the fee</p>
                                     )}
                                 </div>
                             </div>
@@ -488,39 +524,57 @@ export function GymClassFormDialog({ isOpen, onClose, initialData }: Props) {
                     </div>
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--border)] bg-[var(--surface-alt)]/20 shrink-0">
-                        {/* Step dots */}
-                        <div className="flex items-center gap-1.5">
-                            {TABS.map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    type="button"
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`rounded-full transition-all ${
-                                        activeTab === tab.id
-                                            ? 'w-4 h-2 bg-[var(--primary)]'
-                                            : 'w-2 h-2 bg-[var(--border)] hover:bg-[var(--text-tertiary)]'
-                                    }`}
-                                />
-                            ))}
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-4 py-2 rounded-lg border border-[var(--border)] text-xs font-bold text-[var(--text-secondary)] hover:text-foreground hover:border-foreground/20 transition-all"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={mutation.isPending}
-                                className="px-6 py-2 rounded-lg bg-[var(--primary)] text-white text-xs font-black uppercase tracking-wider hover:opacity-90 transition-all disabled:opacity-50"
-                            >
-                                {mutation.isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Register Class'}
-                            </button>
-                        </div>
-                    </div>
+                    {(() => {
+                        const currentTabIndex = TABS.findIndex(t => t.id === activeTab);
+                        const isLastTab = currentTabIndex === TABS.length - 1;
+                        const nextTab = !isLastTab ? TABS[currentTabIndex + 1] : null;
+                        return (
+                            <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--border)] bg-[var(--surface-alt)]/20 shrink-0">
+                                {/* Step dots */}
+                                <div className="flex items-center gap-1.5">
+                                    {TABS.map((tab) => (
+                                        <button
+                                            key={tab.id}
+                                            type="button"
+                                            onClick={() => setActiveTab(tab.id)}
+                                            className={`rounded-full transition-all ${
+                                                activeTab === tab.id
+                                                    ? 'w-4 h-2 bg-[var(--primary)]'
+                                                    : 'w-2 h-2 bg-[var(--border)] hover:bg-[var(--text-tertiary)]'
+                                            }`}
+                                        />
+                                    ))}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={onClose}
+                                        className="px-4 py-2 rounded-lg border border-[var(--border)] text-xs font-bold text-[var(--text-secondary)] hover:text-foreground hover:border-foreground/20 transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    {isLastTab ? (
+                                        <button
+                                            type="submit"
+                                            disabled={mutation.isPending}
+                                            className="px-6 py-2 rounded-lg bg-[var(--primary)] text-white text-xs font-black uppercase tracking-wider hover:opacity-90 transition-all disabled:opacity-50"
+                                        >
+                                            {mutation.isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Register Class'}
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveTab(nextTab!.id)}
+                                            className="flex items-center gap-2 px-6 py-2 rounded-lg bg-[var(--primary)] text-white text-xs font-black uppercase tracking-wider hover:opacity-90 transition-all"
+                                        >
+                                            {nextTab!.icon}
+                                            Next: {nextTab!.label}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </form>
             </div>
         </div>

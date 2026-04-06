@@ -50,6 +50,8 @@ export interface MemberRecord {
     weight?: number;
     medicalConditions?: string;
     photo?: string;
+    memberType?: string;
+    membershipNumber?: string;
     trainerId?: string;
     createdAt: string;
 }

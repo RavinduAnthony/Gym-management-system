@@ -90,9 +90,16 @@ export function MemberDetailsDialog({ isOpen, onClose, member }: Props) {
                             )}
                         </div>
                         <div>
-                            <h2 className="text-2xl font-bold text-foreground">
-                                {member.firstName} {member.lastName}
-                            </h2>
+                            <div className="flex items-center gap-3 mb-1">
+                                <h2 className="text-2xl font-bold text-foreground">
+                                    {member.firstName} {member.lastName}
+                                </h2>
+                                {member.membershipNumber && (
+                                    <span className="px-2.5 py-0.5 text-xs font-black rounded border bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20 tracking-widest">
+                                        #{member.membershipNumber}
+                                    </span>
+                                )}
+                            </div>
                             <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                                 <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full border ${member.status === 'Active' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-muted text-muted-foreground border-border'}`}>
                                     {member.status}
@@ -154,6 +161,12 @@ export function MemberDetailsDialog({ isOpen, onClose, member }: Props) {
                             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                                 {/* Grid stats */}
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {member.membershipNumber && (
+                                        <div className="p-4 border border-[var(--primary)]/20 rounded-xl bg-[var(--primary)]/5">
+                                            <p className="text-xs text-muted-foreground font-medium mb-1">Membership No.</p>
+                                            <p className="text-sm font-black text-[var(--primary)] tracking-widest">#{member.membershipNumber}</p>
+                                        </div>
+                                    )}
                                     <div className="p-4 border border-border rounded-xl bg-muted/20">
                                         <p className="text-xs text-muted-foreground font-medium mb-1">Current Plan</p>
                                         <p className="text-sm font-bold text-foreground truncate">{currentPlanName}</p>
@@ -166,10 +179,12 @@ export function MemberDetailsDialog({ isOpen, onClose, member }: Props) {
                                         <p className="text-xs text-muted-foreground font-medium mb-1">Assigned Trainer</p>
                                         <p className="text-sm font-bold text-foreground">{trainerName}</p>
                                     </div>
-                                    <div className="p-4 border border-border rounded-xl bg-muted/20">
-                                        <p className="text-xs text-muted-foreground font-medium mb-1">Fitness Branch</p>
-                                        <p className="text-sm font-bold text-foreground">{branchName}</p>
-                                    </div>
+                                    {!member.membershipNumber && (
+                                        <div className="p-4 border border-border rounded-xl bg-muted/20">
+                                            <p className="text-xs text-muted-foreground font-medium mb-1">Fitness Branch</p>
+                                            <p className="text-sm font-bold text-foreground">{branchName}</p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
