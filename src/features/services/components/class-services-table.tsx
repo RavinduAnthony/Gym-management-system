@@ -4,16 +4,15 @@ import {
     getCoreRowModel,
     useReactTable,
 } from '@tanstack/react-table';
-import { Edit2, Trash2, Eye, CalendarRange, Clock, Users, MapPin } from 'lucide-react';
+import { Edit2, Trash2, CalendarRange, MapPin } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { gymClassesApi } from '../api/class-services-api';
+import { deleteToastClassNames } from '@/lib/toast-styles';
 import type { GymClass } from '../schemas/class-service-schema';
 
 const col = createColumnHelper<GymClass>();
-
-const DAYS_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 interface Props {
     onEdit: (item: GymClass) => void;
@@ -36,6 +35,16 @@ export function GymClassesTable({ onEdit, onView }: Props) {
         },
         onError: () => toast.error('Failed to delete class'),
     });
+
+    const handleDelete = (item: GymClass) => {
+        toast(`Delete "${item.name}"?`, {
+            description: 'This will permanently remove the class and all its schedules.',
+            duration: 8000,
+            classNames: deleteToastClassNames,
+            action: { label: 'Delete', onClick: () => deleteMutation.mutate(item.id) },
+            cancel: { label: 'Cancel', onClick: () => {} },
+        });
+    };
 
     const columns = [
         col.accessor('name', {
@@ -67,37 +76,6 @@ export function GymClassesTable({ onEdit, onView }: Props) {
                     {info.row.original.instructorSpecialization && (
                         <p className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider">{info.row.original.instructorSpecialization}</p>
                     )}
-                </div>
-            )
-        }),
-        col.accessor('daysOfWeek', {
-            header: 'SCHEDULE',
-            cell: info => {
-                const row = info.row.original;
-                const days = (info.getValue() ?? '').split(',').filter(Boolean);
-                return (
-                    <div>
-                        <div className="flex gap-1 flex-wrap mb-1">
-                            {DAYS_SHORT.map(d => (
-                                <span key={d} className={`text-[9px] font-black px-1.5 py-0.5 rounded ${days.includes(d) ? 'bg-[var(--primary)]/15 text-[var(--primary)]' : 'text-[var(--text-tertiary)]/30'}`}>{d}</span>
-                            ))}
-                        </div>
-                        <div className="flex items-center gap-1 text-[11px] text-[var(--text-tertiary)]">
-                            <Clock className="w-3 h-3" />
-                            <span>{row.startTime}–{row.endTime}</span>
-                            <span className="text-[var(--text-tertiary)]/50 mx-1">·</span>
-                            <span>{row.durationMinutes} min</span>
-                        </div>
-                    </div>
-                );
-            }
-        }),
-        col.accessor('maxCapacity', {
-            header: 'CAPACITY',
-            cell: info => (
-                <div className="flex items-center gap-1.5 text-sm">
-                    <Users className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
-                    <span className="font-bold">{info.getValue()}</span>
                 </div>
             )
         }),
@@ -135,14 +113,11 @@ export function GymClassesTable({ onEdit, onView }: Props) {
             header: '',
             cell: ({ row }) => (
                 <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                    <button onClick={() => onView(row.original)} className="p-1.5 text-[var(--text-tertiary)] hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="View Details">
-                        <Eye className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => onEdit(row.original)} className="p-1.5 text-[var(--text-tertiary)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors" title="Edit">
+                    <button onClick={(e) => { e.stopPropagation(); onEdit(row.original); }} className="p-1.5 text-[var(--text-tertiary)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors" title="Edit">
                         <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                        onClick={() => { if (confirm(`Delete "${row.original.name}"?`)) deleteMutation.mutate(row.original.id); }}
+                        onClick={(e) => { e.stopPropagation(); handleDelete(row.original); }}
                         className="p-1.5 text-[var(--text-tertiary)] hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
                         title="Delete"
                     >
@@ -199,6 +174,7 @@ export function GymClassesTable({ onEdit, onView }: Props) {
                                 exit={{ opacity: 0 }}
                                 transition={{ delay: i * 0.04 }}
                                 className="group border-b border-[var(--border)]/50 hover:bg-[var(--surface-alt)]/40 transition-all cursor-pointer"
+                                onClick={() => onView(row.original)}
                             >
                                 {row.getVisibleCells().map(cell => (
                                     <td key={cell.id} className="px-6 py-4 text-sm text-[var(--text-secondary)] whitespace-nowrap">

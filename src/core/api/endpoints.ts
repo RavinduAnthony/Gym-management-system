@@ -39,4 +39,10 @@ export const ENDPOINTS = {
     // Gym Classes
     GYM_CLASSES: '/gymclass',
     GYM_CLASS_BY_ID: (id: string) => `/gymclass/${id}`,
+
+    // Class Time Slots
+    CLASS_TIME_SLOTS_BY_BRANCH: (branchId: string) => `/classtimeslot/branch/${branchId}`,
+
+    // Settings
+    WORKING_HOURS: '/workinghours',
 } as const;

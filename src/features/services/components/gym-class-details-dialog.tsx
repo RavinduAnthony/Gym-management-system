@@ -1,6 +1,24 @@
 import { X, CalendarRange, Users, Clock, CreditCard, MapPin, User, Phone, Mail, Award } from 'lucide-react';
 import type { GymClass } from '../schemas/class-service-schema';
 
+const DAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+function formatTime12(t: string): string {
+    const [h, m] = t.split(':').map(Number);
+    const suffix = h < 12 ? 'AM' : 'PM';
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${String(m).padStart(2, '0')} ${suffix}`;
+}
+
+function durationLabel(startTime: string, endTime: string): string {
+    const [sh, sm] = startTime.split(':').map(Number);
+    const [eh, em] = endTime.split(':').map(Number);
+    const mins = (eh * 60 + em) - (sh * 60 + sm);
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${h > 0 ? `${h}h ` : ''}${m > 0 ? `${m}m` : ''}`;
+}
+
 interface Props {
     isOpen: boolean;
     onClose: () => void;
@@ -13,11 +31,8 @@ const VALUE = 'text-sm text-foreground font-medium';
 export function GymClassDetailsDialog({ isOpen, onClose, gymClass }: Props) {
     if (!isOpen || !gymClass) return null;
 
-    const days = (gymClass.daysOfWeek ?? '').split(',').filter(Boolean);
-    const dur = gymClass.durationMinutes ?? 0;
-    const durLabel = dur > 0
-        ? `${Math.floor(dur / 60) > 0 ? `${Math.floor(dur / 60)}h ` : ''}${dur % 60 > 0 ? `${dur % 60}m` : ''}`
-        : '—';
+    const sortedSchedules = [...(gymClass.schedules ?? [])]
+        .sort((a, b) => DAY_ORDER.indexOf(a.dayOfWeek) - DAY_ORDER.indexOf(b.dayOfWeek));
 
     return (
         <div
@@ -114,45 +129,40 @@ export function GymClassDetailsDialog({ isOpen, onClose, gymClass }: Props) {
                         </div>
                     )}
 
-                    {/* Schedule */}
+                    {/* Schedule — per day */}
                     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-alt)]/40 p-4 space-y-3">
-                        <div className="flex items-center gap-2 mb-3">
+                        <div className="flex items-center gap-2 mb-1">
                             <CalendarRange className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
                             <span className={LABEL} style={{ marginBottom: 0 }}>Schedule</span>
                         </div>
 
-                        {days.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5">
-                                {days.map((d) => (
-                                    <span
-                                        key={d}
-                                        className="px-2.5 py-1 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20 text-xs font-bold"
+                        {sortedSchedules.length > 0 ? (
+                            <div className="space-y-2">
+                                {sortedSchedules.map((sched) => (
+                                    <div
+                                        key={sched.dayOfWeek}
+                                        className="flex items-center justify-between py-2 px-3 rounded-lg bg-[var(--surface)] border border-[var(--border)]/60"
                                     >
-                                        {d}
-                                    </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-24 text-xs font-black text-[var(--primary)]">{sched.dayOfWeek}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Clock className="w-3 h-3 text-[var(--text-tertiary)]" />
+                                            <span className="text-xs font-bold text-foreground">
+                                                {formatTime12(sched.startTime)} – {formatTime12(sched.endTime)}
+                                            </span>
+                                            <span className="text-[10px] text-[var(--text-tertiary)] ml-1">
+                                                ({durationLabel(sched.startTime, sched.endTime)})
+                                            </span>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
+                        ) : (
+                            <p className="text-xs text-[var(--text-tertiary)]">No schedule set</p>
                         )}
 
-                        <div className="grid grid-cols-3 gap-3">
-                            <div>
-                                <span className={LABEL}>Start Time</span>
-                                <p className={VALUE}>{gymClass.startTime || '—'}</p>
-                            </div>
-                            <div>
-                                <span className={LABEL}>End Time</span>
-                                <p className={VALUE}>{gymClass.endTime || '—'}</p>
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-1 mb-1">
-                                    <Clock className="w-3 h-3 text-[var(--text-tertiary)]" />
-                                    <span className={LABEL} style={{ marginBottom: 0 }}>Duration</span>
-                                </div>
-                                <p className={VALUE}>{durLabel}</p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 pt-1 border-t border-[var(--border)]">
+                        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[var(--border)]">
                             <div>
                                 <span className={LABEL}>Batch Start</span>
                                 <p className={VALUE}>
