@@ -8,6 +8,7 @@ import { TrainerFormDialog } from '../components/trainer-form-dialog';
 import { TrainerScheduleDialog } from '../components/trainer-schedule-dialog';
 import { TrainerDetailsDialog } from '../components/trainer-details-dialog';
 import { Button } from '@/components/ui/Button';
+import { Can, PERMISSIONS } from '@/core/permissions';
 import { Card } from '@/components/ui/Card';
 import { StatCounter } from '@/components/ui/StatCounter';
 import type { Trainer } from '../types';
@@ -70,9 +71,11 @@ export function TrainersPage() {
                     </p>
                 </motion.div>
 
-                <Button onClick={handleCreateNew} size="md" className="gap-2 shadow-2xl shadow-orange-900/20 px-10 h-14">
-                    <Plus className="w-5 h-5" /> REGISTER TRAINER
-                </Button>
+                <Can permission={PERMISSIONS.TRAINERS_CREATE}>
+                    <Button onClick={handleCreateNew} size="md" className="gap-2 shadow-2xl shadow-orange-900/20 px-10 h-14">
+                        <Plus className="w-5 h-5" /> REGISTER TRAINER
+                    </Button>
+                </Can>
             </div>
 
             {/* Stats Row */}

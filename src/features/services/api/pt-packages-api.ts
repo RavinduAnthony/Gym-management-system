@@ -1,39 +1,37 @@
+import api from '@/lib/api';
 import type { PtPackage, PtPackageFormData } from '../schemas/pt-package-schema';
 
-const STORAGE_KEY = 'gym_pt_packages';
-
-const load = (): PtPackage[] => {
-    try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
-    } catch {
-        return [];
-    }
-};
-
-const save = (data: PtPackage[]) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-};
-
 export const ptPackagesApi = {
-    getAll: async (): Promise<PtPackage[]> => load(),
+    getAll: async (): Promise<PtPackage[]> => {
+        const res = await api.get('/ptregistration');
+        return (res.data.data ?? []).map(mapFromApi);
+    },
 
     create: async (data: PtPackageFormData): Promise<PtPackage> => {
-        const records = load();
-        const newRecord: PtPackage = { ...data, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
-        save([...records, newRecord]);
-        return newRecord;
+        const res = await api.post('/ptregistration', data);
+        return mapFromApi(res.data.data);
     },
 
     update: async (id: string, data: PtPackageFormData): Promise<PtPackage> => {
-        const records = load();
-        const updated = records.map(r => r.id === id ? { ...r, ...data, id } : r);
-        save(updated);
-        const result = updated.find(r => r.id === id);
-        if (!result) throw new Error('Not found');
-        return result;
+        const res = await api.put(`/ptregistration/${id}`, data);
+        return mapFromApi(res.data.data);
     },
 
     delete: async (id: string): Promise<void> => {
-        save(load().filter(r => r.id !== id));
+        await api.delete(`/ptregistration/${id}`);
     },
 };
+
+// Map backend camelCase/PascalCase response to frontend PtPackage shape
+function mapFromApi(d: Record<string, unknown>): PtPackage {
+    return {
+        id: d.id as string,
+        trainerId: d.trainerId as string,
+        trainerName: d.trainerName as string | undefined,
+        studentCount: d.studentCount as number,
+        paymentRatePerStudent: d.paymentRatePerStudent as number,
+        status: d.status as 'Active' | 'Inactive',
+        createdAt: d.createdAt as string,
+    };
+}
+

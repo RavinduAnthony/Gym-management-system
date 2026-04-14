@@ -10,6 +10,7 @@ import {
 import { Edit2, User, Trash2, Shield, UserCheck, UserX, RotateCcw, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { membersApi } from '../api/members-api';
+import { Can, PERMISSIONS } from '@/core/permissions';
 import type { Member } from '../types';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -170,47 +171,55 @@ export function MembersTable({ onEdit, onRowClick, mode = 'active' }: MembersTab
                 if (mode === 'inactive') {
                     return (
                         <div className="flex justify-end gap-3 px-6 opacity-0 group-hover:opacity-100 transition-all scale-95 group-hover:scale-100 duration-300">
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={(e) => handleReactivate(e, member)}
-                                className="bg-[var(--surface-alt)] border-[var(--border)] h-10 px-4 gap-2 hover:border-green-500/50 hover:text-green-400 rounded-lg text-[11px] font-black tracking-wider"
-                                title="Reactivate Member"
-                            >
-                                <RotateCcw className="w-3.5 h-3.5" /> REACTIVATE
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={(e) => { e.stopPropagation(); setRemoveTarget(member); }}
-                                className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 hover:border-red-500/50 hover:text-red-400 rounded-lg"
-                                title="Delete Permanently"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <Can permission={PERMISSIONS.MEMBERS_EDIT}>
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={(e) => handleReactivate(e, member)}
+                                    className="bg-[var(--surface-alt)] border-[var(--border)] h-10 px-4 gap-2 hover:border-green-500/50 hover:text-green-400 rounded-lg text-[11px] font-black tracking-wider"
+                                    title="Reactivate Member"
+                                >
+                                    <RotateCcw className="w-3.5 h-3.5" /> REACTIVATE
+                                </Button>
+                            </Can>
+                            <Can permission={PERMISSIONS.MEMBERS_DELETE}>
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={(e) => { e.stopPropagation(); setRemoveTarget(member); }}
+                                    className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 hover:border-red-500/50 hover:text-red-400 rounded-lg"
+                                    title="Delete Permanently"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </Button>
+                            </Can>
                         </div>
                     );
                 }
                 return (
                     <div className="flex justify-end gap-3 px-6 opacity-0 group-hover:opacity-100 transition-all scale-95 group-hover:scale-100 duration-300">
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={(e) => { e.stopPropagation(); onEdit(member); }}
-                            className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 hover:border-[var(--primary)]/50 hover:text-[var(--primary)] rounded-lg"
-                            title="Edit Member"
-                        >
-                            <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={(e) => { e.stopPropagation(); setRemoveTarget(member); }}
-                            className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 hover:border-red-500/50 hover:text-red-400 rounded-lg"
-                            title="Remove Member"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <Can permission={PERMISSIONS.MEMBERS_EDIT}>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); onEdit(member); }}
+                                className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 hover:border-[var(--primary)]/50 hover:text-[var(--primary)] rounded-lg"
+                                title="Edit Member"
+                            >
+                                <Edit2 className="w-4 h-4" />
+                            </Button>
+                        </Can>
+                        <Can permission={PERMISSIONS.MEMBERS_DELETE}>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); setRemoveTarget(member); }}
+                                className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 hover:border-red-500/50 hover:text-red-400 rounded-lg"
+                                title="Remove Member"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        </Can>
                     </div>
                 );
             },

@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { gymClassesApi } from '../api/class-services-api';
+import { Can, PERMISSIONS } from '@/core/permissions';
 import { deleteToastClassNames } from '@/lib/toast-styles';
 import type { GymClass } from '../schemas/class-service-schema';
 
@@ -113,16 +114,18 @@ export function GymClassesTable({ onEdit, onView }: Props) {
             header: '',
             cell: ({ row }) => (
                 <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                    <button onClick={(e) => { e.stopPropagation(); onEdit(row.original); }} className="p-1.5 text-[var(--text-tertiary)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors" title="Edit">
-                        <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); handleDelete(row.original); }}
-                        className="p-1.5 text-[var(--text-tertiary)] hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                        title="Delete"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
+                    <Can permission={PERMISSIONS.SERVICES_MANAGE}>
+                        <button onClick={(e) => { e.stopPropagation(); onEdit(row.original); }} className="p-1.5 text-[var(--text-tertiary)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors" title="Edit">
+                            <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handleDelete(row.original); }}
+                            className="p-1.5 text-[var(--text-tertiary)] hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                            title="Delete"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    </Can>
                 </div>
             )
         }),

@@ -10,6 +10,7 @@ import { CalendarRange, Edit2, Trash2, User, MoreVertical, Dumbbell } from 'luci
 import { toast } from 'sonner';
 import { deleteToastClassNames } from '@/lib/toast-styles';
 import { trainersApi } from '../api/trainers-api';
+import { Can, PERMISSIONS } from '@/core/permissions';
 import type { Trainer } from '../types';
 import { Button } from '@/components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -127,24 +128,28 @@ export function TrainersTable({ onEdit, onViewSchedule, onRowClick }: TrainersTa
                         >
                             <CalendarRange className="w-4 h-4" />
                         </Button>
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={(e) => { e.stopPropagation(); onEdit(trainer); }}
-                            className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 hover:border-[var(--primary)]/50 hover:text-[var(--primary)] rounded-lg"
-                            title="Edit Operative"
-                        >
-                            <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={(e) => { e.stopPropagation(); handleDelete(trainer); }}
-                            className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 text-red-500 hover:bg-red-500/10 hover:border-red-500/30 rounded-lg"
-                            title="Revoke Access"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <Can permission={PERMISSIONS.TRAINERS_EDIT}>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); onEdit(trainer); }}
+                                className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 hover:border-[var(--primary)]/50 hover:text-[var(--primary)] rounded-lg"
+                                title="Edit Operative"
+                            >
+                                <Edit2 className="w-4 h-4" />
+                            </Button>
+                        </Can>
+                        <Can permission={PERMISSIONS.TRAINERS_DELETE}>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); handleDelete(trainer); }}
+                                className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 text-red-500 hover:bg-red-500/10 hover:border-red-500/30 rounded-lg"
+                                title="Revoke Access"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        </Can>
                     </div>
                 );
             },

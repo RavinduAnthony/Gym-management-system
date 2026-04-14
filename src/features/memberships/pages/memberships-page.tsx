@@ -6,6 +6,7 @@ import { MembershipsTable } from '../components/memberships-table';
 import { MembershipFormDialog } from '../components/membership-form-dialog';
 import { PackageDetailsDialog } from '../components/package-details-dialog';
 import { Button } from '@/components/ui/Button';
+import { Can, PERMISSIONS } from '@/core/permissions';
 import { Card } from '@/components/ui/Card';
 import { StatCounter } from '@/components/ui/StatCounter';
 import type { MembershipPackage } from '../types';
@@ -64,9 +65,11 @@ export function MembershipsPage() {
                     </p>
                 </motion.div>
                 
-                <Button onClick={() => setIsDialogOpen(true)} size="md" className="gap-2 shadow-2xl shadow-orange-900/20 px-10 h-14">
-                    <Plus className="w-5 h-5" /> DESIGN NEW PACKAGE
-                </Button>
+                <Can permission={PERMISSIONS.PACKAGES_CREATE}>
+                    <Button onClick={() => setIsDialogOpen(true)} size="md" className="gap-2 shadow-2xl shadow-orange-900/20 px-10 h-14">
+                        <Plus className="w-5 h-5" /> DESIGN NEW PACKAGE
+                    </Button>
+                </Can>
             </div>
 
             {/* Stats Summary */}

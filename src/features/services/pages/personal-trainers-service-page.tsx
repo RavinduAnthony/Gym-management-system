@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Users, CalendarRange, Activity, ChevronLeft } from 'lucide-react';
+import { Plus, Users, DollarSign, Activity, ChevronLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -7,6 +7,7 @@ import { ptPackagesApi } from '../api/pt-packages-api';
 import { PtPackagesTable } from '../components/pt-packages-table';
 import { PtPackageFormDialog } from '../components/pt-package-form-dialog';
 import { Button } from '@/components/ui/Button';
+import { Can, PERMISSIONS } from '@/core/permissions';
 import { Card } from '@/components/ui/Card';
 import { StatCounter } from '@/components/ui/StatCounter';
 import type { PtPackage } from '../schemas/pt-package-schema';
@@ -26,12 +27,14 @@ export function PersonalTrainersServicePage() {
 
     const totalPackages = packages.length;
     const activePackages = packages.filter(p => p.status === 'Active').length;
-    const totalSessions = packages.reduce((sum, p) => sum + (p.sessions ?? 0), 0);
+    const totalMonthlyPayment = packages
+        .filter(p => p.status === 'Active')
+        .reduce((sum, p) => sum + (p.studentCount ?? 0) * (p.paymentRatePerStudent ?? 0), 0);
 
     const stats = [
-        { label: 'Total Packages', value: totalPackages, icon: <Users className="w-5 h-5" />, color: 'var(--primary)' },
-        { label: 'Active', value: activePackages, icon: <Activity className="w-5 h-5" />, color: 'var(--success)' },
-        { label: 'Total Sessions', value: totalSessions, icon: <CalendarRange className="w-5 h-5" />, color: 'var(--secondary)' },
+        { label: 'Total Trainers', value: totalPackages, prefix: '', suffix: '', icon: <Users className="w-5 h-5" />, color: 'var(--primary)' },
+        { label: 'Active', value: activePackages, prefix: '', suffix: '', icon: <Activity className="w-5 h-5" />, color: 'var(--success)' },
+        { label: 'Monthly Payout (LKR)', value: Math.round(totalMonthlyPayment), prefix: '', suffix: '', icon: <DollarSign className="w-5 h-5" />, color: 'var(--secondary)' },
     ];
 
     return (
@@ -52,16 +55,18 @@ export function PersonalTrainersServicePage() {
                         <span className="text-[var(--primary)] text-[10px] font-black uppercase tracking-[0.3em]">Service Management</span>
                     </div>
                     <h1 className="text-4xl font-display font-black text-[var(--text-primary)] uppercase tracking-tighter leading-none">
-                        PERSONAL TRAINER <span className="text-[var(--primary)]">PACKAGES</span>
+                        PERSONAL TRAINER <span className="text-[var(--primary)]">REGISTRATIONS</span>
                     </h1>
                     <p className="text-[var(--text-secondary)] mt-3 font-bold italic border-l-2 border-[var(--primary)] pl-4">
-                        Manage one-on-one training packages and session bundles.
+                        Track trainer student counts and calculate monthly payments.
                     </p>
                 </motion.div>
 
-                <Button onClick={handleCreateNew} size="md" className="gap-2 shadow-2xl px-10 h-14">
-                    <Plus className="w-5 h-5" /> REGISTER PACKAGE
-                </Button>
+                <Can permission={PERMISSIONS.SERVICES_MANAGE}>
+                    <Button onClick={handleCreateNew} size="md" className="gap-2 shadow-2xl px-10 h-14">
+                        <Plus className="w-5 h-5" /> REGISTER TRAINER
+                    </Button>
+                </Can>
             </div>
 
             {/* Stats */}
@@ -78,7 +83,7 @@ export function PersonalTrainersServicePage() {
                             <div className="relative z-10">
                                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-tertiary)] mb-1">{stat.label}</p>
                                 <div className="text-3xl font-display font-black text-[var(--text-primary)]">
-                                    <StatCounter value={stat.value} />
+                                    <StatCounter value={stat.value} prefix={stat.prefix} suffix={stat.suffix} />
                                 </div>
                             </div>
                         </Card>
@@ -90,7 +95,7 @@ export function PersonalTrainersServicePage() {
             <motion.div initial={{ opacity: 0, scale: 0.99 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}>
                 <Card className="p-0 overflow-hidden border-white/5 bg-[var(--surface)] shadow-2xl" hover={false}>
                     <div className="p-6 border-b border-white/5 bg-white/[0.02]">
-                        <h3 className="font-display font-black text-lg uppercase tracking-widest text-white/50">Package Registry</h3>
+                        <h3 className="font-display font-black text-lg uppercase tracking-widest text-white/50">Trainer Registry</h3>
                     </div>
                     <PtPackagesTable onEdit={handleEdit} />
                 </Card>

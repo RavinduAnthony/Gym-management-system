@@ -5,6 +5,7 @@ import { MembersTable } from '../components/members-table';
 import { MemberFormDialog } from '../components/member-form-dialog';
 import { MemberDetailsDialog } from '../components/member-details-dialog';
 import { Button } from '@/components/ui/Button';
+import { Can, PERMISSIONS } from '@/core/permissions';
 import { Card } from '@/components/ui/Card';
 import { StatCounter } from '@/components/ui/StatCounter';
 import type { Member } from '../types';
@@ -70,9 +71,11 @@ export function MembersListPage() {
                     <Button variant="ghost" size="md" className="gap-2 h-14 px-6 border-white/10 text-white/50">
                         <Download className="w-5 h-5" /> EXPORT
                     </Button>
-                    <Button onClick={handleCreateNew} size="md" className="gap-2 shadow-2xl shadow-orange-900/20 px-10 h-14">
-                        <UserPlus className="w-5 h-5" /> REGISTER ATHLETE
-                    </Button>
+                    <Can permission={PERMISSIONS.MEMBERS_CREATE}>
+                        <Button onClick={handleCreateNew} size="md" className="gap-2 shadow-2xl shadow-orange-900/20 px-10 h-14">
+                            <UserPlus className="w-5 h-5" /> REGISTER ATHLETE
+                        </Button>
+                    </Can>
                 </div>
             </div>
 

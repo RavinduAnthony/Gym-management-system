@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { AuthGuard, SetupGuard } from '@/core/auth';
+import { PermissionGuard, PERMISSIONS } from '@/core/permissions';
 
 // Lazy-loaded pages for code splitting
 const LoginPage = lazy(() =>
@@ -123,7 +124,9 @@ export const router = createBrowserRouter([
                                 path: '/members',
                                 element: (
                                     <SuspenseWrapper>
-                                        <MembersListPage />
+                                        <PermissionGuard permission={PERMISSIONS.MEMBERS_VIEW}>
+                                            <MembersListPage />
+                                        </PermissionGuard>
                                     </SuspenseWrapper>
                                 ),
                             },
@@ -131,7 +134,9 @@ export const router = createBrowserRouter([
                                 path: '/memberships',
                                 element: (
                                     <SuspenseWrapper>
-                                        <MembershipsPage />
+                                        <PermissionGuard permission={PERMISSIONS.PACKAGES_VIEW}>
+                                            <MembershipsPage />
+                                        </PermissionGuard>
                                     </SuspenseWrapper>
                                 ),
                             },
@@ -139,7 +144,9 @@ export const router = createBrowserRouter([
                                 path: '/trainers',
                                 element: (
                                     <SuspenseWrapper>
-                                        <TrainersPage />
+                                        <PermissionGuard permission={PERMISSIONS.TRAINERS_VIEW}>
+                                            <TrainersPage />
+                                        </PermissionGuard>
                                     </SuspenseWrapper>
                                 ),
                             },
@@ -147,7 +154,9 @@ export const router = createBrowserRouter([
                                 path: '/payments',
                                 element: (
                                     <SuspenseWrapper>
-                                        <PaymentsPage />
+                                        <PermissionGuard permission={PERMISSIONS.PAYMENTS_VIEW}>
+                                            <PaymentsPage />
+                                        </PermissionGuard>
                                     </SuspenseWrapper>
                                 ),
                             },
@@ -155,7 +164,9 @@ export const router = createBrowserRouter([
                                 path: '/attendance',
                                 element: (
                                     <SuspenseWrapper>
-                                        <AttendancePage />
+                                        <PermissionGuard permission={PERMISSIONS.ATTENDANCE_VIEW}>
+                                            <AttendancePage />
+                                        </PermissionGuard>
                                     </SuspenseWrapper>
                                 ),
                             },
@@ -163,7 +174,9 @@ export const router = createBrowserRouter([
                                 path: '/reports',
                                 element: (
                                     <SuspenseWrapper>
-                                        <ReportsPage />
+                                        <PermissionGuard permission={PERMISSIONS.REPORTS_VIEW}>
+                                            <ReportsPage />
+                                        </PermissionGuard>
                                     </SuspenseWrapper>
                                 ),
                             },
@@ -171,7 +184,9 @@ export const router = createBrowserRouter([
                                 path: '/settings',
                                 element: (
                                     <SuspenseWrapper>
-                                        <SettingsPage />
+                                        <PermissionGuard permission={PERMISSIONS.SETTINGS_VIEW}>
+                                            <SettingsPage />
+                                        </PermissionGuard>
                                     </SuspenseWrapper>
                                 ),
                             },
@@ -179,7 +194,9 @@ export const router = createBrowserRouter([
                                 path: '/services',
                                 element: (
                                     <SuspenseWrapper>
-                                        <ServicesHubPage />
+                                        <PermissionGuard permission={PERMISSIONS.SERVICES_VIEW}>
+                                            <ServicesHubPage />
+                                        </PermissionGuard>
                                     </SuspenseWrapper>
                                 ),
                             },
@@ -187,7 +204,9 @@ export const router = createBrowserRouter([
                                 path: '/services/classes',
                                 element: (
                                     <SuspenseWrapper>
-                                        <ClassesPage />
+                                        <PermissionGuard permission={PERMISSIONS.SERVICES_VIEW}>
+                                            <ClassesPage />
+                                        </PermissionGuard>
                                     </SuspenseWrapper>
                                 ),
                             },
@@ -195,7 +214,9 @@ export const router = createBrowserRouter([
                                 path: '/services/personal-trainers',
                                 element: (
                                     <SuspenseWrapper>
-                                        <PersonalTrainersServicePage />
+                                        <PermissionGuard permission={PERMISSIONS.SERVICES_VIEW}>
+                                            <PersonalTrainersServicePage />
+                                        </PermissionGuard>
                                     </SuspenseWrapper>
                                 ),
                             },

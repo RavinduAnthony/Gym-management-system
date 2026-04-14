@@ -10,6 +10,7 @@ import { Edit2, Trash2, Package, Clock, Shield, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { deleteToastClassNames } from '@/lib/toast-styles';
 import { membershipsApi } from '../api/memberships-api';
+import { Can, PERMISSIONS } from '@/core/permissions';
 import type { MembershipPackage } from '../types';
 import { Button } from '@/components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -124,24 +125,28 @@ export function MembershipsTable({ onEdit, onRowClick }: Props) {
                 const pkg = info.row.original;
                 return (
                     <div className="flex justify-end gap-3 px-6 opacity-0 group-hover:opacity-100 transition-all scale-95 group-hover:scale-100 duration-300">
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={(e) => { e.stopPropagation(); onEdit(pkg); }}
-                            className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 hover:border-[var(--primary)]/50 hover:text-[var(--primary)] rounded-lg"
-                            title="Refactor Architecture"
-                        >
-                            <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={(e) => { e.stopPropagation(); handleDelete(pkg); }}
-                            className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 text-red-500 hover:bg-red-500/10 hover:border-red-500/30 rounded-lg"
-                            title="Decommission Tier"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <Can permission={PERMISSIONS.PACKAGES_EDIT}>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); onEdit(pkg); }}
+                                className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 hover:border-[var(--primary)]/50 hover:text-[var(--primary)] rounded-lg"
+                                title="Refactor Architecture"
+                            >
+                                <Edit2 className="w-4 h-4" />
+                            </Button>
+                        </Can>
+                        <Can permission={PERMISSIONS.PACKAGES_DELETE}>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); handleDelete(pkg); }}
+                                className="bg-[var(--surface-alt)] border-[var(--border)] h-10 w-10 p-0 text-red-500 hover:bg-red-500/10 hover:border-red-500/30 rounded-lg"
+                                title="Decommission Tier"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        </Can>
                     </div>
                 );
             },

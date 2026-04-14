@@ -3,6 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, LayoutDashboard, Activity } from 'lucide-react';
 import { NAV_CONFIG } from '@/core/constants/nav-config';
 import { useAuthStore } from '@/core/auth';
+import { usePermissions } from '@/core/permissions';
 import { IronCoreLogo } from '../branding/IronCoreLogo';
 import { motion } from 'framer-motion';
 
@@ -13,10 +14,11 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     const user = useAuthStore((s) => s.user);
+    const { canDo } = usePermissions();
     const location = useLocation();
 
     const visibleItems = NAV_CONFIG.filter(
-        (item) => user && item.roles.includes(user.role)
+        (item) => user && item.roles.includes(user.role) && (!item.viewPermission || canDo(item.viewPermission))
     );
 
     return (

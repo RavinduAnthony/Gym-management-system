@@ -8,6 +8,7 @@ import { GymClassesTable } from '../components/class-services-table';
 import { GymClassFormDialog } from '../components/class-service-form-dialog';
 import { GymClassDetailsDialog } from '../components/gym-class-details-dialog';
 import { Button } from '@/components/ui/Button';
+import { Can, PERMISSIONS } from '@/core/permissions';
 import { Card } from '@/components/ui/Card';
 import { StatCounter } from '@/components/ui/StatCounter';
 import type { GymClass } from '../schemas/class-service-schema';
@@ -62,9 +63,11 @@ export function ClassesPage() {
                     </p>
                 </motion.div>
 
-                <Button onClick={handleCreateNew} size="md" className="gap-2 shadow-2xl shadow-orange-900/20 px-10 h-14">
-                    <Plus className="w-5 h-5" /> REGISTER CLASS
-                </Button>
+                <Can permission={PERMISSIONS.SERVICES_MANAGE}>
+                    <Button onClick={handleCreateNew} size="md" className="gap-2 shadow-2xl shadow-orange-900/20 px-10 h-14">
+                        <Plus className="w-5 h-5" /> REGISTER CLASS
+                    </Button>
+                </Can>
             </div>
 
             {/* Stats */}

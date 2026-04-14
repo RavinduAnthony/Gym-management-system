@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ptPackageSchema, type PtPackageFormData, type PtPackage } from '../schemas/pt-package-schema';
 import { ptPackagesApi } from '../api/pt-packages-api';
 import { Button } from '@/components/ui/Button';
+import { useTrainers } from '@/hooks/useTrainers';
+import { useServiceSettings } from '@/hooks/useServiceSettings';
 
 interface PtPackageFormDialogProps {
     isOpen: boolean;
@@ -19,19 +21,34 @@ export function PtPackageFormDialog({ isOpen, onClose, initialData }: PtPackageF
     const queryClient = useQueryClient();
     const isEditing = !!initialData?.id;
 
-    const { register, handleSubmit, reset, formState: { errors } } = useForm<PtPackageFormData>({
+    const { data: trainers = [], isLoading: trainersLoading } = useTrainers();
+    const { data: serviceSettings } = useServiceSettings();
+    const ptDefaultRate = serviceSettings?.find(s => s.serviceType === 'PersonalTrainers')?.defaultAmount ?? 0;
+
+    const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<PtPackageFormData>({
         resolver: zodResolver(ptPackageSchema),
-        defaultValues: { status: 'Active', sessions: 12, durationMinutes: 60, validityDays: 90, defaultAmount: 0 },
+        defaultValues: { status: 'Active', studentCount: 0, paymentRatePerStudent: ptDefaultRate, trainerId: '' },
     });
 
     useEffect(() => {
         if (isOpen) {
             reset(initialData
                 ? { ...initialData }
-                : { status: 'Active', sessions: 12, durationMinutes: 60, validityDays: 90, defaultAmount: 0, name: '' }
+                : { status: 'Active', studentCount: 0, paymentRatePerStudent: ptDefaultRate, trainerId: '' }
             );
         }
-    }, [isOpen, initialData, reset]);
+    }, [isOpen, initialData, reset, ptDefaultRate]);
+
+    // Auto-fill trainerName when trainerId changes
+    const selectedTrainerId = watch('trainerId');
+    useEffect(() => {
+        const trainer = trainers.find(t => t.id === selectedTrainerId);
+        if (trainer) setValue('trainerName', `${trainer.firstName} ${trainer.lastName}`);
+    }, [selectedTrainerId, trainers, setValue]);
+
+    const studentCount = watch('studentCount') ?? 0;
+    const rate = watch('paymentRatePerStudent') ?? ptDefaultRate;
+    const monthlyPayment = studentCount * rate;
 
     const mutation = useMutation({
         mutationFn: (data: PtPackageFormData) =>
@@ -40,10 +57,10 @@ export function PtPackageFormDialog({ isOpen, onClose, initialData }: PtPackageF
                 : ptPackagesApi.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['ptPackages'] });
-            toast.success(isEditing ? 'Package updated successfully' : 'Package registered successfully');
+            toast.success(isEditing ? 'Registration updated successfully' : 'Trainer registered successfully');
             onClose();
         },
-        onError: () => toast.error('Failed to save package'),
+        onError: () => toast.error('Failed to save registration'),
     });
 
     const labelCls = 'text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-widest mb-2 block';
@@ -65,7 +82,7 @@ export function PtPackageFormDialog({ isOpen, onClose, initialData }: PtPackageF
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.96, y: 16 }}
                         transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-                        className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden"
+                        className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}
@@ -76,9 +93,9 @@ export function PtPackageFormDialog({ isOpen, onClose, initialData }: PtPackageF
                                 </div>
                                 <div>
                                     <h2 className="text-base font-black text-white uppercase tracking-wider">
-                                        {isEditing ? 'Edit Package' : 'Register New Package'}
+                                        {isEditing ? 'Edit Registration' : 'Register Personal Trainer'}
                                     </h2>
-                                    <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">Personal trainer service package</p>
+                                    <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">Record trainer's student count &amp; monthly payment</p>
                                 </div>
                             </div>
                             <button
@@ -90,72 +107,89 @@ export function PtPackageFormDialog({ isOpen, onClose, initialData }: PtPackageF
                         </div>
 
                         {/* Form */}
-                        <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                {/* Name */}
-                                <div className="md:col-span-2">
-                                    <label className={labelCls}>Package Name *</label>
-                                    <input {...register('name')} placeholder="e.g. Starter Pack, Elite 24-Session" className={inputCls} />
-                                    {errors.name && <p className={errorCls}>{errors.name.message}</p>}
-                                </div>
+                        <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="p-8 space-y-5">
 
-                                {/* Description */}
-                                <div className="md:col-span-2">
-                                    <label className={labelCls}>Description</label>
-                                    <input {...register('description')} placeholder="Brief description of the package" className={inputCls} />
-                                </div>
+                            {/* Trainer Select */}
+                            <div>
+                                <label className={labelCls}>Personal Trainer *</label>
+                                <select
+                                    {...register('trainerId')}
+                                    className={`${inputCls} cursor-pointer`}
+                                    disabled={trainersLoading}
+                                >
+                                    <option value="">{trainersLoading ? 'Loading trainers...' : 'Select a trainer'}</option>
+                                    {trainers.map(t => (
+                                        <option key={t.id} value={t.id}>{t.firstName} {t.lastName}</option>
+                                    ))}
+                                </select>
+                                {errors.trainerId && <p className={errorCls}>{errors.trainerId.message}</p>}
+                            </div>
 
-                                {/* Sessions */}
+                            <div className="grid grid-cols-2 gap-5">
+                                {/* Student Count */}
                                 <div>
-                                    <label className={labelCls}>Number of Sessions *</label>
-                                    <input type="number" min={1} {...register('sessions', { valueAsNumber: true })} placeholder="12" className={inputCls} />
-                                    {errors.sessions && <p className={errorCls}>{errors.sessions.message}</p>}
+                                    <label className={labelCls}>Number of Students *</label>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        placeholder="0"
+                                        {...register('studentCount', { valueAsNumber: true })}
+                                        className={inputCls}
+                                    />
+                                    <p className="text-[10px] text-[var(--text-tertiary)] mt-1">Students brought in per month</p>
+                                    {errors.studentCount && <p className={errorCls}>{errors.studentCount.message}</p>}
                                 </div>
 
-                                {/* Duration */}
+                                {/* Rate Per Student */}
                                 <div>
-                                    <label className={labelCls}>Session Duration (minutes) *</label>
-                                    <input type="number" min={1} {...register('durationMinutes', { valueAsNumber: true })} placeholder="60" className={inputCls} />
-                                    {errors.durationMinutes && <p className={errorCls}>{errors.durationMinutes.message}</p>}
-                                </div>
-
-                                {/* Validity */}
-                                <div>
-                                    <label className={labelCls}>Validity (days) *</label>
-                                    <input type="number" min={1} {...register('validityDays', { valueAsNumber: true })} placeholder="90" className={inputCls} />
-                                    {errors.validityDays && <p className={errorCls}>{errors.validityDays.message}</p>}
-                                </div>
-
-                                {/* Default Amount */}
-                                <div>
-                                    <label className={labelCls}>Default Amount (LKR) *</label>
+                                    <label className={labelCls}>Rate Per Student (LKR) *</label>
                                     <div className="flex">
                                         <span className="h-11 px-3 flex items-center bg-[var(--surface-alt)] border border-r-0 border-[var(--border)] rounded-l-xl text-xs font-black text-[var(--text-secondary)]">LKR</span>
                                         <input
-                                            type="number" min={0} step={0.01}
-                                            {...register('defaultAmount', { valueAsNumber: true })}
-                                            placeholder="0.00"
+                                            type="number"
+                                            min={0}
+                                            step={0.01}
+                                            placeholder={ptDefaultRate > 0 ? String(ptDefaultRate) : '0.00'}
+                                            {...register('paymentRatePerStudent', { valueAsNumber: true })}
                                             className={`${inputCls} rounded-l-none`}
                                         />
                                     </div>
-                                    {errors.defaultAmount && <p className={errorCls}>{errors.defaultAmount.message}</p>}
+                                    <p className="text-[10px] text-[var(--text-tertiary)] mt-1">Default: LKR {ptDefaultRate.toFixed(2)}</p>
+                                    {errors.paymentRatePerStudent && <p className={errorCls}>{errors.paymentRatePerStudent.message}</p>}
                                 </div>
+                            </div>
 
-                                {/* Status */}
-                                <div>
-                                    <label className={labelCls}>Status</label>
-                                    <select {...register('status')} className={`${inputCls} cursor-pointer`}>
-                                        <option value="Active">Active</option>
-                                        <option value="Inactive">Inactive</option>
-                                    </select>
+                            {/* Calculated Monthly Payment */}
+                            {studentCount > 0 && (
+                                <div className="flex items-center justify-between px-5 py-4 bg-[var(--primary)]/10 border border-[var(--primary)]/20 rounded-xl">
+                                    <div>
+                                        <p className="text-[10px] font-black text-[var(--primary)] uppercase tracking-widest mb-0.5">
+                                            Calculated Monthly Payment
+                                        </p>
+                                        <p className="text-[10px] text-[var(--text-tertiary)]">
+                                            {studentCount} student{studentCount !== 1 ? 's' : ''} × LKR {rate.toFixed(2)}
+                                        </p>
+                                    </div>
+                                    <span className="text-2xl font-black text-[var(--primary)]">
+                                        LKR {monthlyPayment.toLocaleString('en-LK', { minimumFractionDigits: 2 })}
+                                    </span>
                                 </div>
+                            )}
+
+                            {/* Status */}
+                            <div>
+                                <label className={labelCls}>Status</label>
+                                <select {...register('status')} className={`${inputCls} cursor-pointer`}>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
                             </div>
 
                             {/* Footer */}
                             <div className="flex justify-end gap-3 pt-2 border-t border-[var(--border)]">
                                 <Button variant="secondary" type="button" onClick={onClose}>Cancel</Button>
                                 <Button variant="primary" type="submit" disabled={mutation.isPending} className="px-8">
-                                    {mutation.isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Register Package'}
+                                    {mutation.isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Register Trainer'}
                                 </Button>
                             </div>
                         </form>
