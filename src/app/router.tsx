@@ -1,12 +1,15 @@
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
-import { AuthGuard, SetupGuard } from '@/core/auth';
+import { AuthGuard, SetupGuard, TempPasswordGuard } from '@/core/auth';
 import { PermissionGuard, PERMISSIONS } from '@/core/permissions';
 
 // Lazy-loaded pages for code splitting
 const LoginPage = lazy(() =>
     import('@/features/auth/pages/login-page').then((m) => ({ default: m.LoginPage }))
+);
+const ResetPasswordPage = lazy(() =>
+    import('@/features/auth/pages/reset-password-page').then((m) => ({ default: m.ResetPasswordPage }))
 );
 const RegisterPage = lazy(() =>
     import('@/features/gym-registration/pages/register-page').then((m) => ({ default: m.RegisterPage }))
@@ -103,8 +106,19 @@ export const router = createBrowserRouter([
                 ),
             },
             {
-                element: <SetupGuard />,
+                path: '/reset-password',
+                element: (
+                    <SuspenseWrapper>
+                        <ResetPasswordPage />
+                    </SuspenseWrapper>
+                ),
+            },
+            {
+                element: <TempPasswordGuard />,
                 children: [
+                    {
+                        element: <SetupGuard />,
+                        children: [
                     {
                         element: <AppLayout />,
                         children: [
@@ -224,6 +238,8 @@ export const router = createBrowserRouter([
                     },
                 ],
             },
+        ],
+    },
         ],
     },
 

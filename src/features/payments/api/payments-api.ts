@@ -5,6 +5,9 @@ import type {
     PaymentDashboardSummary,
     RecordPaymentRequest,
     PaymentType,
+    ServicePaymentSchedule,
+    ServicePaymentHistory,
+    RecordServicePaymentRequest,
 } from '../types';
 
 interface ApiResponse<T> {
@@ -46,5 +49,30 @@ export const paymentsApi = {
     getPaymentTypes: async (): Promise<PaymentType[]> => {
         const res = await api.get<ApiResponse<PaymentType[]>>('/payments/types');
         return res.data.data ?? [];
+    },
+
+    // ─── Service Payments (Classes + PT) ──────────────────────────────────
+    getServiceSchedules: async (): Promise<ServicePaymentSchedule[]> => {
+        const res = await api.get<ApiResponse<ServicePaymentSchedule[]>>('/servicepayments/schedules');
+        return res.data.data ?? [];
+    },
+
+    getServiceHistory: async (): Promise<ServicePaymentHistory[]> => {
+        const res = await api.get<ApiResponse<ServicePaymentHistory[]>>('/servicepayments/history');
+        return res.data.data ?? [];
+    },
+
+    recordServicePayment: async (dto: RecordServicePaymentRequest): Promise<ServicePaymentSchedule> => {
+        const res = await api.post<ApiResponse<ServicePaymentSchedule>>('/servicepayments/record', dto);
+        return res.data.data;
+    },
+
+    refreshServiceLate: async (): Promise<void> => {
+        await api.post('/servicepayments/refresh-late');
+    },
+
+    generateServiceSchedules: async (serviceType?: string): Promise<number> => {
+        const res = await api.post<ApiResponse<number>>('/servicepayments/generate', { serviceType: serviceType ?? null });
+        return res.data.data;
     },
 };

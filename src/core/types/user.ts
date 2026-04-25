@@ -11,4 +11,5 @@ export interface User {
     branchId?: string;
     avatar?: string;
     setupCompleted?: boolean;
+    isTemporaryPassword?: boolean;
 }

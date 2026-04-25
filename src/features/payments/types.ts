@@ -37,6 +37,14 @@ export interface PaymentDashboardSummary {
     lateCount: number;
     lateAmount: number;
     paidThisMonth: number;
+    // Service payment totals
+    serviceTotalRevenue: number;
+    serviceThisYearRevenue: number;
+    serviceThisMonthRevenue: number;
+    servicePendingCount: number;
+    servicePendingAmount: number;
+    serviceLateCount: number;
+    serviceLateAmount: number;
 }
 
 export interface RecordPaymentRequest {
@@ -53,3 +61,42 @@ export interface PaymentType {
     description?: string;
     isActive: boolean;
 }
+
+// ─── Service Payments (Classes + PT) ─────────────────────────────────────────
+
+export type ServiceType = 'Class' | 'PT';
+
+export interface ServicePaymentSchedule {
+    id: string;
+    serviceType: ServiceType;
+    gymClassId?: string;
+    ptRegistrationId?: string;
+    serviceName: string;
+    month: string; // "2026-04"
+    dueDate: string;
+    amount: number;
+    status: 'Pending' | 'Paid' | 'Late';
+    paidDate?: string;
+    notes?: string;
+}
+
+export interface ServicePaymentHistory {
+    id: string;
+    serviceType: ServiceType;
+    serviceName: string;
+    month: string;
+    date: string;
+    amount: number;
+    status: string;
+    method: string;
+    notes?: string;
+}
+
+export interface RecordServicePaymentRequest {
+    scheduleId: string;
+    amount: number;
+    method: string;
+    paidDate?: string;
+    notes?: string;
+}
+

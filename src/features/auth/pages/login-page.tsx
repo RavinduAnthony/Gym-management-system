@@ -24,23 +24,29 @@ export function LoginPage() {
 
         try {
             const response = await api.post('/auth/login', { email, password });
-            const { token, userId, tenantId, role } = response.data.data;
+            const { token, userId, tenantId, role, isTemporaryPassword } = response.data.data;
 
             login(
                 {
                     id: userId,
                     email,
-                    firstName: "Gym", 
-                    lastName: "User", 
+                    firstName: "Gym",
+                    lastName: "User",
                     role: role,
                     tenantId: tenantId,
-                    setupCompleted: true, 
+                    setupCompleted: true,
+                    isTemporaryPassword: isTemporaryPassword ?? false,
                 },
                 token
             );
-            
-            navigate('/dashboard');
-            toast.success('Successfully logged in!');
+
+            if (isTemporaryPassword) {
+                navigate('/reset-password');
+                toast.info('Please set a new password to continue.');
+            } else {
+                navigate('/dashboard');
+                toast.success('Successfully logged in!');
+            }
         } catch (error: any) {
             console.error('Login failed:', error);
             toast.error(error.response?.data?.message || 'Invalid email or password');
