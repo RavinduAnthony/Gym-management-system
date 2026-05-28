@@ -31,7 +31,6 @@ const mapMembershipToBackendDto = (memberId: string, data: MemberFormData, price
         price,
         discount: 0,
         paymentStatus: data.paymentStatus,
-        registrationFee: data.registrationFee ?? 0,
     };
 };
 
@@ -84,14 +83,14 @@ export const membersApi = {
         }
     },
 
-    createMember: async (data: MemberFormData & { _price?: number }): Promise<Member> => {
+    createMember: async (data: MemberFormData): Promise<Member> => {
         // 1. Create the member record
         const memberPayload = mapMemberToBackendDto(data);
         const memberRes = await api.post<{ data: MemberRecord }>('/member', memberPayload);
         const member = memberRes.data.data;
 
-        // 2. Create the membership record
-        const price = data._price ?? 0;
+        // 2. Create the membership record (with price from packages — pass 0 if unknown, UI should set it)
+        const price = 0; // Price is stored in the package; pass 0 as placeholder if not resolved
         const membershipPayload = mapMembershipToBackendDto(member.id, data, price);
         const msRes = await api.post<{ data: MembershipRecord }>('/membership', membershipPayload);
         const membership = msRes.data.data;
@@ -99,21 +98,20 @@ export const membersApi = {
         return mergeWithMembership(member, membership);
     },
 
-    updateMember: async (id: string, data: Partial<MemberFormData> & { _price?: number }, membershipId?: string): Promise<Member> => {
+    updateMember: async (id: string, data: Partial<MemberFormData>, membershipId?: string): Promise<Member> => {
         // 1. Update the member record
         const memberPayload = { ...mapMemberToBackendDto(data), status: (data as any).status };
         const memberRes = await api.put<{ data: MemberRecord }>(`/member/${id}`, memberPayload);
         const member = memberRes.data.data;
 
-        // 2. Update or create the membership record
+        // 2. Update the membership record if we have an ID and membership fields
         let membership: MembershipRecord | null = null;
-        const price = data._price ?? 0;
         if (membershipId && data.membershipPlanId && data.membershipStartDate && data.membershipEndDate) {
             const msPayload = {
                 packageId: data.membershipPlanId,
                 startDate: data.membershipStartDate,
                 endDate: data.membershipEndDate,
-                price,
+                price: 0,
                 discount: 0,
                 paymentStatus: data.paymentStatus ?? 'Pending',
             };
@@ -121,7 +119,7 @@ export const membersApi = {
             membership = msRes.data.data;
         } else if (!membershipId && data.membershipPlanId && data.membershipStartDate && data.membershipEndDate) {
             // No existing membership — create one
-            const membershipPayload = mapMembershipToBackendDto(id, data as MemberFormData, price);
+            const membershipPayload = mapMembershipToBackendDto(id, data as MemberFormData, 0);
             const msRes = await api.post<{ data: MembershipRecord }>('/membership', membershipPayload);
             membership = msRes.data.data;
         }
@@ -133,34 +131,6 @@ export const membersApi = {
         await api.delete(`/member/${id}`);
     },
 
-
-    deactivateMember: async (id: string): Promise<void> => {
-        await api.post(`/member/${id}/deactivate`);
-    },
-
-    reactivateMember: async (id: string): Promise<void> => {
-        await api.post(`/member/${id}/reactivate`);
-    },
-
-    getInactiveMembers: async (): Promise<Member[]> => {
-        const membersRes = await api.get<{ data: MemberRecord[] }>('/member/inactive');
-        const members = membersRes.data.data ?? [];
-        const enriched = await Promise.all(
-            members.map(async (m) => {
-                try {
-                    const msRes = await api.get<{ data: MembershipRecord[] }>(`/membership/member/${m.id}`);
-                    const list = msRes.data.data ?? [];
-                    const latest = list.sort((a, b) =>
-                        new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-                    )[0] ?? null;
-                    return mergeWithMembership(m, latest);
-                } catch {
-                    return mergeWithMembership(m, null);
-                }
-            })
-        );
-        return enriched;
-    },
     getMembershipsByMember: async (memberId: string): Promise<MembershipRecord[]> => {
         try {
             const response = await api.get<{ data: MembershipRecord[] }>(`/membership/member/${memberId}`);

@@ -75,4 +75,9 @@ export const paymentsApi = {
         const res = await api.post<ApiResponse<number>>('/servicepayments/generate', { serviceType: serviceType ?? null });
         return res.data.data;
     },
+
+    generateMemberSchedules: async (): Promise<string> => {
+        const res = await api.post<ApiResponse<string>>('/payments/generate-member-schedules');
+        return res.data.data ?? res.data.message ?? 'Done';
+    },
 };

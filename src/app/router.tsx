@@ -53,6 +53,9 @@ const PersonalTrainersServicePage = lazy(() =>
 const LandingPage = lazy(() =>
     import('@/features/landing/pages/LandingPage').then((m) => ({ default: m.LandingPage }))
 );
+const ForgotPasswordPage = lazy(() =>
+    import('@/features/auth/pages/forgot-password-page').then((m) => ({ default: m.ForgotPasswordPage }))
+);
 
 function PageLoader() {
     return (
@@ -89,6 +92,14 @@ export const router = createBrowserRouter([
         element: (
             <SuspenseWrapper>
                 <RegisterPage />
+            </SuspenseWrapper>
+        ),
+    },
+    {
+        path: '/forgot-password',
+        element: (
+            <SuspenseWrapper>
+                <ForgotPasswordPage />
             </SuspenseWrapper>
         ),
     },

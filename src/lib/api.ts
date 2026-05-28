@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Ensure you have an environment variable for the backend URL,
 // or fallback to the standard .NET local dev port.
-const baseURL = import.meta.env.VITE_API_URL || 'https://localhost:44304/api';
+const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5123/api';
 
 const api = axios.create({
     baseURL,

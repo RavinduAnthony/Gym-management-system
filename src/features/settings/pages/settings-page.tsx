@@ -1,6 +1,6 @@
 // src/features/settings/pages/settings-page.tsx
 import { useState } from 'react';
-import { Building2, Users, Shield, CreditCard, Clock, Dumbbell, Layers, Settings } from 'lucide-react';
+import { Building2, Users, Shield, CreditCard, Clock, Dumbbell, Layers, Settings, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GymProfileSettings } from '../components/GymProfileSettings';
 import { UsersRolesSettings } from '../components/UsersRolesSettings';
@@ -9,6 +9,7 @@ import { PaymentSettings } from '../components/PaymentSettings';
 import { WorkingHoursSettings } from '../components/WorkingHoursSettings';
 import { TrainerTypeSettings } from '../components/TrainerTypeSettings';
 import { ServiceSettings } from '../components/ServiceSettings';
+import { ExpensesSettings } from '../components/ExpensesSettings';
 
 const TABS = [
     { id: 'gym-profile', label: 'Gym Profile', icon: Building2 },
@@ -18,6 +19,7 @@ const TABS = [
     { id: 'working-hours', label: 'Working Hours', icon: Clock },
     { id: 'trainer-settings', label: 'Trainer Settings', icon: Dumbbell },
     { id: 'service-settings', label: 'Service Settings', icon: Layers },
+    { id: 'expenses', label: 'Expenses', icon: TrendingUp },
 ];
 
 const TAB_CONTENT: Record<string, React.ReactNode> = {
@@ -28,6 +30,7 @@ const TAB_CONTENT: Record<string, React.ReactNode> = {
     'working-hours': <WorkingHoursSettings />,
     'trainer-settings': <TrainerTypeSettings />,
     'service-settings': <ServiceSettings />,
+    'expenses': <ExpensesSettings />,
 };
 
 export function SettingsPage() {

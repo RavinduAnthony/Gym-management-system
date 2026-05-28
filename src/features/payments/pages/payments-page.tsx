@@ -122,6 +122,16 @@ export function PaymentsPage() {
         onError: () => toast.error('Failed to generate service schedules'),
     });
 
+    const generateMemberMutation = useMutation({
+        mutationFn: () => paymentsApi.generateMemberSchedules(),
+        onSuccess: (msg) => {
+            queryClient.invalidateQueries({ queryKey: ['payment-schedules'] });
+            queryClient.invalidateQueries({ queryKey: ['payment-summary'] });
+            toast.success(msg);
+        },
+        onError: () => toast.error('Failed to generate member schedules'),
+    });
+
     const currentMonth = new Date().toISOString().slice(0, 7); // e.g. "2026-04"
     const thisMonthSchedules = schedules.filter((s) => s.month === currentMonth);
 
@@ -207,12 +217,20 @@ export function PaymentsPage() {
 
                 <div className="flex gap-3">
                     <button
+                        onClick={() => generateMemberMutation.mutate()}
+                        disabled={generateMemberMutation.isPending}
+                        className="flex items-center gap-2 px-5 h-11 text-sm font-semibold bg-amber-600/10 border border-amber-500/30 rounded-lg text-amber-400 hover:bg-amber-600/20 transition-colors disabled:opacity-60"
+                    >
+                        <Users className={`w-4 h-4 ${generateMemberMutation.isPending ? 'animate-spin' : ''}`} />
+                        Generate Member Schedules
+                    </button>
+                    <button
                         onClick={() => generateMutation.mutate()}
                         disabled={generateMutation.isPending}
                         className="flex items-center gap-2 px-5 h-11 text-sm font-semibold bg-violet-600/10 border border-violet-500/30 rounded-lg text-violet-400 hover:bg-violet-600/20 transition-colors disabled:opacity-60"
                     >
                         <Dumbbell className={`w-4 h-4 ${generateMutation.isPending ? 'animate-spin' : ''}`} />
-                        Generate Schedules
+                        Generate Service Schedules
                     </button>
                     <button
                         onClick={() => refreshMutation.mutate()}

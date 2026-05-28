@@ -25,7 +25,6 @@ export const memberSchema = z.object({
     membershipStartDate: z.string().min(1, 'Start date is required'),
     membershipEndDate: z.string().min(1, 'End date is required'),
     paymentStatus: z.enum(['Paid', 'Pending']),
-    registrationFee: z.number().min(0).default(0),
     trainerId: z.string().optional(),
 });
 
@@ -50,8 +49,6 @@ export interface MemberRecord {
     weight?: number;
     medicalConditions?: string;
     photo?: string;
-    memberType?: string;
-    membershipNumber?: string;
     trainerId?: string;
     createdAt: string;
 }

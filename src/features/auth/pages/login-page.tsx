@@ -24,14 +24,14 @@ export function LoginPage() {
 
         try {
             const response = await api.post('/auth/login', { email, password });
-            const { token, userId, tenantId, role, isTemporaryPassword } = response.data.data;
+            const { token, userId, tenantId, role, firstName, lastName, isTemporaryPassword } = response.data.data;
 
             login(
                 {
                     id: userId,
                     email,
-                    firstName: "Gym",
-                    lastName: "User",
+                    firstName: firstName || email.split('@')[0],
+                    lastName: lastName || '',
                     role: role,
                     tenantId: tenantId,
                     setupCompleted: true,
@@ -109,9 +109,9 @@ export function LoginPage() {
                                 <input type="checkbox" className="w-4 h-4 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary-light)] accent-[var(--primary)]" />
                                 <span className="text-sm text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">Remember me</span>
                             </label>
-                            <a href="#" className="text-sm font-semibold text-[var(--primary)] hover:text-[var(--primary-dark)] transition-colors">
+                            <Link to="/forgot-password" className="text-sm font-semibold text-[var(--primary)] hover:text-[var(--primary-dark)] transition-colors">
                                 Forgot password?
-                            </a>
+                            </Link>
                         </div>
 
                         <Button
