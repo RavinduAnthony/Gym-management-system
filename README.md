@@ -1,73 +1,59 @@
-# React + TypeScript + Vite
+## IronCore Gym SaaS — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A multi-tenant Gym management web app built with **React 19 + TypeScript + Vite**.
 
-Currently, two official plugins are available:
+### Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+| Layer | Library |
+|---|---|
+| Framework | React 19, TypeScript 5.9, Vite 7 |
+| Routing | React Router DOM 7 (lazy-loaded routes) |
+| Server state | TanStack React Query 5 |
+| Client state | Zustand 5 (auth + theme, persisted to `localStorage`) |
+| Forms | React Hook Form 7 + Zod 4 |
+| HTTP | Axios — auto-injects `Authorization: Bearer` + `X-Tenant-Id` headers |
+| UI / Animations | Tailwind CSS 4, Framer Motion 12, Lucide React icons |
+| Charts | Recharts 3 |
+| Tables | TanStack Table 8 + TanStack Virtual 3 |
+| Notifications | Sonner toast |
+| Exports | jsPDF + jspdf-autotable (PDF), xlsx (Excel) |
 
-## React Compiler
+### Project Structure
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+├── app/              # Router, providers, App root
+├── core/             # Axios instance, auth, permissions, constants, types
+├── features/         # Domain modules (auth, members, trainers, payments, …)
+├── components/       # Shared UI: layout, form controls, branding
+├── hooks/            # Reusable React Query hooks
+├── styles/           # Global CSS, design tokens, themes
+└── lib/              # Axios API wrapper, toast utilities
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Key Features
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **Multi-tenant auth** — JWT login, tenant ID carried on every request, auto-logout on 401
+- **Role-based access** — `Owner`, `Manager`, `Receptionist`, `Trainer`; routes and UI elements gated per role
+- **Setup Wizard** — 4-step onboarding (Gym Profile → Membership Plans → Staff → Payment Settings), Owner-only, blocked once completed
+- **Members** — Full CRUD, profile photos, branch & trainer assignment, membership status enrichment
+- **Trainers** — CRUD with certifications, specializations, availability
+- **Memberships & Packages** — Package catalog management, member enrollment, renewal
+- **Payments** — Monthly payment schedule tracking, pending/late/paid status, payment recording, schedule backfill
+- **Attendance** — Check-in / check-out logging
+- **Reports** — Revenue and membership analytics with PDF/Excel export
+- **Settings** — Gym profile, users & roles, working hours, branches, service configuration
+- **Theme** — Dark / Light / System mode via CSS design tokens; primary color `#C62828`
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Running Locally
+
+```bash
+# Prerequisites: Node.js 20+
+
+cd "Gym App"
+npm install
+npm run dev
+# App available at http://localhost:5173
 ```
+
+Set `VITE_API_URL` in a `.env.local` file to point at the backend (defaults to `http://localhost:5123/api`).
